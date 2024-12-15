@@ -35,6 +35,8 @@ The project uses several development tools and commands:
 
 ### Available Commands
 
+This project uses [just](https://github.com/casey/just) to manage commands. Please install it to use the commands below.
+
 Reference to justfile commands:
 
 - `just run` - Run the application from source
