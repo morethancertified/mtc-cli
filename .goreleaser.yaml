@@ -1,0 +1,26 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - format: binary
+# brews:
+#   - tap:
+#     owner: morethancertified
+#     name: mtc-cli-tap
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
