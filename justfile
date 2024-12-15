@@ -2,7 +2,7 @@ default:
   @just --list
 
 build:
-  go build -o bin/mtc main.go
+  go build -o bin/mtc-cli main.go
 
 test:
   go test -v ./...
