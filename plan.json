@@ -1,0 +1,422 @@
+{
+  "applyable": true,
+  "complete": true,
+  "configuration": {
+    "provider_config": {
+      "aws": {
+        "full_name": "registry.terraform.io/integrations/github",
+        "name": "aws",
+        "version_constraint": "~> 5.0"
+      },
+      "github": {
+        "full_name": "registry.terraform.io/hashicorp/github",
+        "name": "github"
+      }
+    },
+    "root_module": {
+      "resources": [
+        {
+          "address": "github_branch.backend_dev",
+          "expressions": {
+            "branch": {
+              "constant_value": "development"
+            },
+            "repository": {
+              "references": [
+                "github_repository.backend_repo.name",
+                "github_repository.backend_repo"
+              ]
+            }
+          },
+          "mode": "managed",
+          "name": "backend_dev",
+          "provider_config_key": "github",
+          "schema_version": 0,
+          "type": "github_branch"
+        },
+        {
+          "address": "github_branch.frontend_dev",
+          "expressions": {
+            "branch": {
+              "constant_value": "development"
+            },
+            "repository": {
+              "references": [
+                "github_repository.backend_repo.name",
+                "github_repository.backend_repo"
+              ]
+            }
+          },
+          "mode": "managed",
+          "name": "frontend_dev",
+          "provider_config_key": "github",
+          "schema_version": 0,
+          "type": "github_branch"
+        },
+        {
+          "address": "github_repository.backend_repo",
+          "expressions": {
+            "auto_init": {
+              "constant_value": true
+            },
+            "description": {
+              "constant_value": "Backend Repo"
+            },
+            "name": {
+              "constant_value": "backend"
+            }
+          },
+          "mode": "managed",
+          "name": "backend_repo",
+          "provider_config_key": "github",
+          "schema_version": 1,
+          "type": "github_repository"
+        },
+        {
+          "address": "github_repository.frontend_repo",
+          "depends_on": ["github_repository.backend_repo"],
+          "expressions": {
+            "auto_init": {
+              "constant_value": true
+            },
+            "description": {
+              "constant_value": "Frontend Repo"
+            },
+            "name": {
+              "constant_value": "frontend"
+            }
+          },
+          "mode": "managed",
+          "name": "frontend_repo",
+          "provider_config_key": "github",
+          "schema_version": 1,
+          "type": "github_repository"
+        }
+      ]
+    }
+  },
+  "errored": false,
+  "format_version": "1.2",
+  "planned_values": {
+    "root_module": {
+      "resources": [
+        {
+          "address": "github_branch.backend_dev",
+          "mode": "managed",
+          "name": "backend_dev",
+          "provider_name": "registry.terraform.io/hashicorp/github",
+          "schema_version": 0,
+          "sensitive_values": {},
+          "type": "github_branch",
+          "values": {
+            "branch": "development",
+            "repository": "backend",
+            "source_branch": "main"
+          }
+        },
+        {
+          "address": "github_branch.frontend_dev",
+          "mode": "managed",
+          "name": "frontend_dev",
+          "provider_name": "registry.terraform.io/hashicorp/github",
+          "schema_version": 0,
+          "sensitive_values": {},
+          "type": "github_branch",
+          "values": {
+            "branch": "development",
+            "repository": "backend",
+            "source_branch": "main"
+          }
+        },
+        {
+          "address": "github_repository.backend_repo",
+          "mode": "managed",
+          "name": "backend_repo",
+          "provider_name": "registry.terraform.io/hashicorp/github",
+          "schema_version": 1,
+          "sensitive_values": {
+            "pages": [],
+            "security_and_analysis": [],
+            "template": [],
+            "topics": []
+          },
+          "type": "github_repository",
+          "values": {
+            "allow_auto_merge": false,
+            "allow_merge_commit": true,
+            "allow_rebase_merge": true,
+            "allow_squash_merge": true,
+            "allow_update_branch": null,
+            "archive_on_destroy": null,
+            "archived": false,
+            "auto_init": false,
+            "delete_branch_on_merge": false,
+            "description": "Backend Repo",
+            "gitignore_template": null,
+            "has_discussions": null,
+            "has_downloads": null,
+            "has_issues": null,
+            "has_projects": null,
+            "has_wiki": null,
+            "homepage_url": null,
+            "ignore_vulnerability_alerts_during_read": null,
+            "is_template": null,
+            "license_template": null,
+            "merge_commit_message": "PR_TITLE",
+            "merge_commit_title": "MERGE_MESSAGE",
+            "name": "backend",
+            "pages": [],
+            "squash_merge_commit_message": "COMMIT_MESSAGES",
+            "squash_merge_commit_title": "COMMIT_OR_PR_TITLE",
+            "template": [],
+            "vulnerability_alerts": null,
+            "web_commit_signoff_required": false
+          }
+        },
+        {
+          "address": "github_repository.frontend_repo",
+          "mode": "managed",
+          "name": "frontend_repo",
+          "provider_name": "registry.terraform.io/hashicorp/github",
+          "schema_version": 1,
+          "sensitive_values": {
+            "pages": [],
+            "security_and_analysis": [],
+            "template": [],
+            "topics": []
+          },
+          "type": "github_repository",
+          "values": {
+            "allow_auto_merge": false,
+            "allow_merge_commit": true,
+            "allow_rebase_merge": true,
+            "allow_squash_merge": true,
+            "allow_update_branch": null,
+            "archive_on_destroy": null,
+            "archived": false,
+            "auto_init": true,
+            "delete_branch_on_merge": false,
+            "description": "Frontend Repo",
+            "gitignore_template": null,
+            "has_discussions": null,
+            "has_downloads": null,
+            "has_issues": null,
+            "has_projects": null,
+            "has_wiki": null,
+            "homepage_url": null,
+            "ignore_vulnerability_alerts_during_read": null,
+            "is_template": null,
+            "license_template": null,
+            "merge_commit_message": "PR_TITLE",
+            "merge_commit_title": "MERGE_MESSAGE",
+            "name": "frontend",
+            "pages": [],
+            "squash_merge_commit_message": "COMMIT_MESSAGES",
+            "squash_merge_commit_title": "COMMIT_OR_PR_TITLE",
+            "template": [],
+            "vulnerability_alerts": null,
+            "web_commit_signoff_required": false
+          }
+        }
+      ]
+    }
+  },
+  "relevant_attributes": [
+    {
+      "attribute": ["name"],
+      "resource": "github_repository.backend_repo"
+    }
+  ],
+  "resource_changes": [
+    {
+      "address": "github_branch.backend_dev",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "branch": "development",
+          "repository": "backend",
+          "source_branch": "main"
+        },
+        "after_sensitive": {},
+        "after_unknown": {
+          "etag": true,
+          "id": true,
+          "ref": true,
+          "sha": true,
+          "source_sha": true
+        },
+        "before": null,
+        "before_sensitive": false
+      },
+      "mode": "managed",
+      "name": "backend_dev",
+      "provider_name": "registry.terraform.io/hashicorp/github",
+      "type": "github_branch"
+    },
+    {
+      "address": "github_branch.frontend_dev",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "branch": "development",
+          "repository": "backend",
+          "source_branch": "main"
+        },
+        "after_sensitive": {},
+        "after_unknown": {
+          "etag": true,
+          "id": true,
+          "ref": true,
+          "sha": true,
+          "source_sha": true
+        },
+        "before": null,
+        "before_sensitive": false
+      },
+      "mode": "managed",
+      "name": "frontend_dev",
+      "provider_name": "registry.terraform.io/hashicorp/github",
+      "type": "github_branch"
+    },
+    {
+      "address": "github_repository.backend_repo",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "allow_auto_merge": false,
+          "allow_merge_commit": true,
+          "allow_rebase_merge": true,
+          "allow_squash_merge": true,
+          "allow_update_branch": null,
+          "archive_on_destroy": null,
+          "archived": false,
+          "auto_init": false,
+          "delete_branch_on_merge": false,
+          "description": "Backend Repo",
+          "gitignore_template": null,
+          "has_discussions": null,
+          "has_downloads": null,
+          "has_issues": null,
+          "has_projects": null,
+          "has_wiki": null,
+          "homepage_url": null,
+          "ignore_vulnerability_alerts_during_read": null,
+          "is_template": null,
+          "license_template": null,
+          "merge_commit_message": "PR_TITLE",
+          "merge_commit_title": "MERGE_MESSAGE",
+          "name": "backend",
+          "pages": [],
+          "squash_merge_commit_message": "COMMIT_MESSAGES",
+          "squash_merge_commit_title": "COMMIT_OR_PR_TITLE",
+          "template": [],
+          "vulnerability_alerts": null,
+          "web_commit_signoff_required": false
+        },
+        "after_sensitive": {
+          "pages": [],
+          "security_and_analysis": [],
+          "template": [],
+          "topics": []
+        },
+        "after_unknown": {
+          "default_branch": true,
+          "etag": true,
+          "full_name": true,
+          "git_clone_url": true,
+          "html_url": true,
+          "http_clone_url": true,
+          "id": true,
+          "node_id": true,
+          "pages": [],
+          "primary_language": true,
+          "private": true,
+          "repo_id": true,
+          "security_and_analysis": true,
+          "ssh_clone_url": true,
+          "svn_url": true,
+          "template": [],
+          "topics": true,
+          "visibility": true
+        },
+        "before": null,
+        "before_sensitive": false
+      },
+      "mode": "managed",
+      "name": "backend_repo",
+      "provider_name": "registry.terraform.io/hashicorp/github",
+      "type": "github_repository"
+    },
+    {
+      "address": "github_repository.frontend_repo",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "allow_auto_merge": false,
+          "allow_merge_commit": true,
+          "allow_rebase_merge": true,
+          "allow_squash_merge": true,
+          "allow_update_branch": null,
+          "archive_on_destroy": null,
+          "archived": false,
+          "auto_init": true,
+          "delete_branch_on_merge": false,
+          "description": "Frontend Repo",
+          "gitignore_template": null,
+          "has_discussions": null,
+          "has_downloads": null,
+          "has_issues": null,
+          "has_projects": null,
+          "has_wiki": null,
+          "homepage_url": null,
+          "ignore_vulnerability_alerts_during_read": null,
+          "is_template": null,
+          "license_template": null,
+          "merge_commit_message": "PR_TITLE",
+          "merge_commit_title": "MERGE_MESSAGE",
+          "name": "frontend",
+          "pages": [],
+          "squash_merge_commit_message": "COMMIT_MESSAGES",
+          "squash_merge_commit_title": "COMMIT_OR_PR_TITLE",
+          "template": [],
+          "vulnerability_alerts": null,
+          "web_commit_signoff_required": false
+        },
+        "after_sensitive": {
+          "pages": [],
+          "security_and_analysis": [],
+          "template": [],
+          "topics": []
+        },
+        "after_unknown": {
+          "default_branch": true,
+          "etag": true,
+          "full_name": true,
+          "git_clone_url": true,
+          "html_url": true,
+          "http_clone_url": true,
+          "id": true,
+          "node_id": true,
+          "pages": [],
+          "primary_language": true,
+          "private": true,
+          "repo_id": true,
+          "security_and_analysis": true,
+          "ssh_clone_url": true,
+          "svn_url": true,
+          "template": [],
+          "topics": true,
+          "visibility": true
+        },
+        "before": null,
+        "before_sensitive": false
+      },
+      "mode": "managed",
+      "name": "frontend_repo",
+      "provider_name": "registry.terraform.io/hashicorp/github",
+      "type": "github_repository"
+    }
+  ],
+  "terraform_version": "1.10.0",
+  "timestamp": "2024-12-12T14:07:40Z"
+}

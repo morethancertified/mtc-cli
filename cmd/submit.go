@@ -7,18 +7,11 @@ import (
 
 	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/k0kubun/pp"
 	"github.com/morethancertified/mtc-cli/internal/mtcapi"
-	"github.com/morethancertified/mtc-cli/internal/widgets"
+	"github.com/morethancertified/mtc-cli/internal/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-type CLICommandResult struct {
-	ExitCode int
-	Command  string
-	Stdout   string
-}
 
 var submitCmd = &cobra.Command{
 	Use:     "submit <lesson-token>",
@@ -27,10 +20,22 @@ var submitCmd = &cobra.Command{
 	Example: "mtc submit cm4ppz694200blze51ts1234",
 	Run: func(cmd *cobra.Command, args []string) {
 		lessonToken := args[0]
+		reset, _ := cmd.Flags().GetBool("reset")
 		apiClient := mtcapi.New(viper.GetString("api_base_url"))
 		lesson, err := apiClient.GetLesson(lessonToken)
 		if err != nil {
 			fmt.Println("Error getting lesson:", err)
+			return
+		}
+
+		if reset {
+			lesson, err = apiClient.ResetLesson(lessonToken)
+			if err != nil {
+				fmt.Println("Error resetting lesson:", err)
+				return
+			}
+			fmt.Println("\nLesson reset!")
+			printTasksTable(lesson.Tasks)
 			return
 		}
 
@@ -40,14 +45,7 @@ var submitCmd = &cobra.Command{
 			fmt.Println(command)
 		}
 
-		fmt.Println("\nTASKS:")
-		t := table.NewWriter()
-		t.AppendHeader(table.Row{"Title", "Status"})
-		for _, task := range lesson.Tasks {
-			t.AppendRow(table.Row{task.Title, task.Status})
-		}
-		t.SetStyle(table.StyleRounded)
-		fmt.Println(t.Render())
+		printTasksTable(lesson.Tasks)
 
 		input := confirmation.New("Ready to run commands?", confirmation.Yes)
 		ready, err := input.RunPrompt()
@@ -60,11 +58,11 @@ var submitCmd = &cobra.Command{
 			return
 		}
 
-		widgets.RunProgressBar()
+		// widgets.RunProgressBar()
 
-		cliCommandResults := []CLICommandResult{}
+		cliCommandResults := []types.CLICommandResult{}
 		for _, command := range lesson.CliCommands {
-			cliCommandResult := CLICommandResult{
+			cliCommandResult := types.CLICommandResult{
 				Command: command,
 			}
 
@@ -74,6 +72,7 @@ var submitCmd = &cobra.Command{
 			fmt.Printf("\nRan command: %s\n", cmd.String())
 			if ee, ok := err.(*exec.ExitError); ok {
 				cliCommandResult.ExitCode = ee.ExitCode()
+				cliCommandResult.Stderr = strings.TrimRight(string(ee.Stderr), "\n\t\r")
 			} else if err != nil {
 				cliCommandResult.ExitCode = -69
 			} else {
@@ -83,13 +82,29 @@ var submitCmd = &cobra.Command{
 			cliCommandResults = append(cliCommandResults, cliCommandResult)
 		}
 
-		pp.Println(cliCommandResults)
+		lesson, err = apiClient.SubmitLesson(lessonToken, cliCommandResults)
+		if err != nil {
+			fmt.Println("Error submitting lesson:", err)
+			return
+		}
+
+		fmt.Println("\nLesson submitted!")
+		printTasksTable(lesson.Tasks)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(submitCmd)
+	submitCmd.Flags().BoolP("reset", "r", false, "Reset the lesson tasks")
 }
 
-type SubmitLessonRequest struct {
+func printTasksTable(tasks []types.Task) {
+	fmt.Println("\nTASKS:")
+	t := table.NewWriter()
+	t.AppendHeader(table.Row{"Title", "Status"})
+	for _, task := range tasks {
+		t.AppendRow(table.Row{task.Title, task.Status})
+	}
+	t.SetStyle(table.StyleRounded)
+	fmt.Println(t.Render())
 }

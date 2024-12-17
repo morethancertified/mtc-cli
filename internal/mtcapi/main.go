@@ -1,10 +1,11 @@
 package mtcapi
 
 import (
+	"fmt"
 	"strings"
-	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/morethancertified/mtc-cli/internal/types"
 )
 
 type MtcApiClient struct {
@@ -22,33 +23,47 @@ func New(baseURL string) *MtcApiClient {
 	}
 }
 
-func (c *MtcApiClient) GetLesson(lessonToken string) (Lesson, error) {
+func (c *MtcApiClient) GetLesson(lessonToken string) (types.Lesson, error) {
 	res, err := c.httpClient.R().
 		// SetDebug(true).
-		SetResult(&Lesson{}).
+		SetResult(&types.Lesson{}).
 		Get("/lessons/" + lessonToken)
 	if err != nil {
-		return Lesson{}, err
+		return types.Lesson{}, err
 	}
-	return *res.Result().(*Lesson), nil
+	return *res.Result().(*types.Lesson), nil
+}
+
+func (c *MtcApiClient) SubmitLesson(lessonToken string, cliCommandResults []types.CLICommandResult) (types.Lesson, error) {
+	res, err := c.httpClient.R().
+		// SetDebug(true).
+		SetBody(types.SubmitLessonRequest{
+			Type:              types.SubmitLessonRequestTypeCommandResults,
+			CliCommandResults: cliCommandResults,
+		}).
+		SetResult(&types.Lesson{}).
+		Post("/lessons/" + lessonToken + "/submit")
+	if err != nil {
+		return types.Lesson{}, err
+	}
+
+	if res.IsError() {
+		return types.Lesson{}, fmt.Errorf("%s", res.String())
+	}
+
+	return *res.Result().(*types.Lesson), nil
+}
+
+func (c *MtcApiClient) ResetLesson(lessonToken string) (types.Lesson, error) {
+	res, err := c.httpClient.R().
+		SetResult(&types.Lesson{}).
+		Post("/lessons/" + lessonToken + "/reset")
+	if err != nil {
+		return types.Lesson{}, err
+	}
+	return *res.Result().(*types.Lesson), nil
 }
 
 func ValidCUID(cuid string) bool {
 	return len(cuid) >= 7 && strings.HasPrefix(cuid, "c")
-}
-
-type Lesson struct {
-	ID          string    `json:"id"`
-	CliCommands []string  `json:"cli_commands"`
-	Tasks       []Task    `json:"tasks"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-}
-
-type Task struct {
-	ID        string    `json:"id"`
-	Title     string    `json:"title"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
 }
