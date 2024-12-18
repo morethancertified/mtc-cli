@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/erikgeiser/promptkit/confirmation"
-	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/morethancertified/mtc-cli/internal/mtcapi"
 	"github.com/morethancertified/mtc-cli/internal/types"
 	"github.com/spf13/cobra"
@@ -100,11 +99,22 @@ func init() {
 
 func printTasksTable(tasks []types.Task) {
 	fmt.Println("\nTASKS:")
-	t := table.NewWriter()
-	t.AppendHeader(table.Row{"Title", "Status"})
+	fmt.Println("------")
 	for _, task := range tasks {
-		t.AppendRow(table.Row{task.Title, task.Status})
+		status := "⚪"
+		if task.Status == "COMPLETED" {
+			status = "✅"
+		} else if task.Status == "FAILED" {
+			status = "❌"
+		}
+
+		fmt.Printf("%s %s\n", status, task.Title)
 	}
-	t.SetStyle(table.StyleRounded)
-	fmt.Println(t.Render())
+	// t := table.NewWriter()
+	// t.AppendHeader(table.Row{"Title", "Status"})
+	// for _, task := range tasks {
+	// 	t.AppendRow(table.Row{task.Title, task.Status})
+	// }
+	// t.SetStyle(table.StyleLight)
+	// fmt.Println(t.Render())
 }
