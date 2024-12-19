@@ -8,7 +8,6 @@ require (
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/go-resty/resty/v2 v2.16.2
-	github.com/jedib0t/go-pretty/v6 v6.6.5
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 )

@@ -31,7 +31,14 @@ func (c *MtcApiClient) GetLesson(lessonToken string) (types.Lesson, error) {
 	if err != nil {
 		return types.Lesson{}, err
 	}
-	return *res.Result().(*types.Lesson), nil
+
+	results := *res.Result().(*types.Lesson)
+
+	if len(results.Tasks) == 0 {
+		return types.Lesson{}, fmt.Errorf("token is invalid")
+	}
+
+	return results, nil
 }
 
 func (c *MtcApiClient) SubmitLesson(lessonToken string, cliCommandResults []types.CLICommandResult) (types.Lesson, error) {
