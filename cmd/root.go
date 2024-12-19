@@ -46,7 +46,7 @@ func initConfig() {
 
 		if err := viper.ReadInConfig(); err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-				viper.Set("api_base_url", "http://localhost:5173/api/v1")
+				viper.Set("api_base_url", "http://morethancertified.com/api/v1")
 				err := viper.SafeWriteConfigAs(filepath.Join(configDir, "config.json"))
 				cobra.CheckErr(err)
 			} else {

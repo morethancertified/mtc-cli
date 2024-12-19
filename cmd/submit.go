@@ -8,6 +8,7 @@ import (
 	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/morethancertified/mtc-cli/internal/mtcapi"
 	"github.com/morethancertified/mtc-cli/internal/types"
+	"github.com/morethancertified/mtc-cli/internal/widgets"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,15 +39,15 @@ var submitCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Println("\nCommands to run")
-		fmt.Println("------")
+		printTasksTable(lesson.Tasks)
+		fmt.Println("\nWe will now run the following command(s) to validate your lesson:")
+		fmt.Println("------------------------------------------------------------------")
 		for _, command := range lesson.CliCommands {
 			fmt.Println(command)
 		}
+		fmt.Println("------------------------------------------------------------------")
 
-		printTasksTable(lesson.Tasks)
-
-		input := confirmation.New("Ready to run commands?", confirmation.Yes)
+		input := confirmation.New("Continue?", confirmation.Yes)
 		ready, err := input.RunPrompt()
 		if err != nil {
 			fmt.Println("Error getting confirmation:", err)
@@ -57,7 +58,7 @@ var submitCmd = &cobra.Command{
 			return
 		}
 
-		// widgets.RunProgressBar()
+		widgets.RunProgressBar()
 
 		cliCommandResults := []types.CLICommandResult{}
 		for _, command := range lesson.CliCommands {
@@ -68,7 +69,6 @@ var submitCmd = &cobra.Command{
 			cmd := exec.Command("sh", "-c", "LANG=en_US.UTF-8 "+command)
 
 			b, err := cmd.Output()
-			fmt.Printf("\nRan command: %s\n", cmd.String())
 			if ee, ok := err.(*exec.ExitError); ok {
 				cliCommandResult.ExitCode = ee.ExitCode()
 				cliCommandResult.Stderr = strings.TrimRight(string(ee.Stderr), "\n\t\r")
@@ -87,8 +87,10 @@ var submitCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Println("\nLesson submitted!")
+		fmt.Println("\nGrading complete!")
+
 		printTasksTable(lesson.Tasks)
+		fmt.Println()
 	},
 }
 
@@ -98,8 +100,8 @@ func init() {
 }
 
 func printTasksTable(tasks []types.Task) {
-	fmt.Println("\nTASKS:")
-	fmt.Println("------")
+	fmt.Println("\nTASK STATUS:")
+	fmt.Println("------------")
 	for _, task := range tasks {
 		status := "⚪"
 		if task.Status == "COMPLETED" {
