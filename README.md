@@ -31,6 +31,12 @@ Submit a lesson for validation:
 mtc submit <lesson-token>
 ```
 
+To reset your progress for a lesson:
+
+```bash
+mtc submit <lesson-token> -r
+```
+
 Example:
 
 ```bash
