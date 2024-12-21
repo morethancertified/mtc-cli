@@ -10,10 +10,13 @@ import (
 
 var cfgFile string
 
+var Version = "dev"
+
 var rootCmd = &cobra.Command{
-	Use:   "mtc",
-	Short: "The MoreThanCertified CLI",
-	Long:  `This program is used to validate your MoreThanCertified lesson tasks interactively on your local machine.`,
+	Use:     "mtc-cli",
+	Short:   "The MoreThanCertified CLI",
+	Long:    `This program is used to validate your MoreThanCertified lesson tasks interactively on your local machine.`,
+	Version: Version,
 }
 
 func init() {

@@ -12,12 +12,14 @@ builds:
     goarch:
       - amd64
       - arm64
+    ldflags:
+      - -X github.com/morethancertified/mtc-cli/cmd.Version={{.Version}}
 archives:
   - format: binary
 # brews:
 #   - tap:
 #     owner: morethancertified
-#     name: mtc-cli-tap
+#     name: mtc-cli-tap 
 changelog:
   sort: asc
   filters:
