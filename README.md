@@ -9,6 +9,14 @@ A command-line interface tool for validating MoreThanCertified lesson tasks loca
 
 ## Installation
 
+Currently, the mtc-cli is only supported on macOS and Linux (including linux via Windows Subsystem for Linux).
+
+### With installer script
+
+```bash
+curl -s https://app.morethancertified.com/install.sh | sh
+```
+
 ### With Go
 
 ```bash
