@@ -10,7 +10,7 @@ import (
 
 var cfgFile string
 
-var Version = "dev"
+var Version = "v0.0.0"
 
 var rootCmd = &cobra.Command{
 	Use:     "mtc-cli",
