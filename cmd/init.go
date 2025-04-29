@@ -71,18 +71,29 @@ var initCmd = &cobra.Command{
 		fmt.Printf("Downloading %d files...\n", len(files))
 		
 		for i, file := range files {
-			// Create subdirectories if needed
-			filePath := filepath.Join(labDir, file.Path)
-			fileDir := filepath.Dir(filePath)
+			// Determine the target path
+			var filePath string
 			
+			// If it's a public file, extract it to the root of the lab directory
+			if strings.HasPrefix(file.Path, "public/") {
+				// Remove the "public/" prefix
+				targetPath := strings.TrimPrefix(file.Path, "public/")
+				filePath = filepath.Join(labDir, targetPath)
+				fmt.Printf("[%d/%d] Downloading %s to %s...\n", i+1, len(files), file.Path, targetPath)
+			} else {
+				// Keep the original path for other files
+				filePath = filepath.Join(labDir, file.Path)
+				fmt.Printf("[%d/%d] Downloading %s...\n", i+1, len(files), file.Path)
+			}
+			
+			// Create subdirectories if needed
+			fileDir := filepath.Dir(filePath)
 			if err := os.MkdirAll(fileDir, 0755); err != nil {
 				fmt.Printf("Error creating directory %s: %s\n", fileDir, err)
 				continue
 			}
 			
 			// Download file
-			fmt.Printf("[%d/%d] Downloading %s...\n", i+1, len(files), file.Path)
-			
 			if err := downloadFile(file.URL, filePath); err != nil {
 				fmt.Printf("Error downloading %s: %s\n", file.Path, err)
 				continue
