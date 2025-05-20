@@ -1,6 +1,7 @@
 package mtcapi
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/morethancertified/mtc-cli/internal/types"
@@ -24,43 +25,102 @@ func (c *MtcApiClient) GetLabInfo(userLessonID string) (types.LabInfo, error) {
 
 // GetLabFiles fetches all files for a lab (public, bootstrap, and other)
 func (c *MtcApiClient) GetLabFiles(userLessonID string) ([]types.LabFile, error) {
-	res, err := c.httpClient.R().
-		SetResult(&types.LabFiles{}).
+	// Make a single request and print the raw response for debugging
+	rawRes, err := c.httpClient.R().
 		Get("/labs/" + userLessonID + "/files")
 	if err != nil {
 		return nil, err
 	}
 
-	if res.IsError() {
-		return nil, fmt.Errorf("API error: %s", res.String())
+	if rawRes.IsError() {
+		return nil, fmt.Errorf("API error: %s", rawRes.String())
 	}
 
-	result := res.Result().(*types.LabFiles)
-	var files []types.LabFile
+	// No need for debug printing in production code
+
+	// Check for empty files response: {"files":[]}
+	if string(rawRes.Body()) == "{\"files\":[]}" {
+		return []types.LabFile{}, nil
+	}
+
+	// Try to unmarshal as a direct array of LabFile
+	var directFiles []types.LabFile
+	err = json.Unmarshal(rawRes.Body(), &directFiles)
+	if err == nil {
+		// If this succeeds, return the files directly
+		return directFiles, nil
+	}
+
+	// Try to unmarshal as a simple wrapper with files array
+	var simpleFiles struct {
+		Files []types.LabFile `json:"files"`
+	}
+	err = json.Unmarshal(rawRes.Body(), &simpleFiles)
+	if err == nil && simpleFiles.Files != nil {
+		return simpleFiles.Files, nil
+	}
+
+	// If simple unmarshaling fails, try the full structured approach
+	var labFiles types.LabFiles
+	err = json.Unmarshal(rawRes.Body(), &labFiles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse response: %v", err)
+	}
 
 	// Combine all file types
-	files = append(files, result.Files.Public...)
-	files = append(files, result.Files.Bootstrap...)
-	files = append(files, result.Files.Other...)
+	var files []types.LabFile
+	files = append(files, labFiles.Files.Public...)
+	files = append(files, labFiles.Files.Bootstrap...)
+	files = append(files, labFiles.Files.Other...)
 
 	return files, nil
 }
 
 // GetLabPublicFiles fetches only public files for a lab
 func (c *MtcApiClient) GetLabPublicFiles(userLessonID string) ([]types.LabFile, error) {
-	res, err := c.httpClient.R().
-		SetResult(&types.LabPublicFiles{}).
+	// Make a single request and print the raw response for debugging
+	rawRes, err := c.httpClient.R().
 		Get("/labs/" + userLessonID + "/files/public")
 	if err != nil {
 		return nil, err
 	}
 
-	if res.IsError() {
-		return nil, fmt.Errorf("API error: %s", res.String())
+	if rawRes.IsError() {
+		return nil, fmt.Errorf("API error: %s", rawRes.String())
 	}
 
-	result := res.Result().(*types.LabPublicFiles)
-	return result.Files, nil
+	// No need for debug printing in production code
+
+	// Check for empty files response: {"files":[]}
+	if string(rawRes.Body()) == "{\"files\":[]}" {
+		return []types.LabFile{}, nil
+	}
+
+	// Try to unmarshal as a direct array of LabFile
+	var directFiles []types.LabFile
+	err = json.Unmarshal(rawRes.Body(), &directFiles)
+	if err == nil {
+		// If this succeeds, return the files directly
+		return directFiles, nil
+	}
+
+	// Try to unmarshal as a simple wrapper with files array
+	var simpleFiles struct {
+		Files []types.LabFile `json:"files"`
+	}
+	err = json.Unmarshal(rawRes.Body(), &simpleFiles)
+	if err == nil && simpleFiles.Files != nil {
+		return simpleFiles.Files, nil
+	}
+
+	// If simple unmarshaling fails, try the structured approach
+	var labFiles types.LabPublicFiles
+	err = json.Unmarshal(rawRes.Body(), &labFiles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse public files response: %v", err)
+	}
+
+	return labFiles.Files, nil
 }
 
 // GetLabFileURL fetches a pre-signed URL for a specific file
