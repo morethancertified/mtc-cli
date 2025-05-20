@@ -154,6 +154,9 @@ func sanitizeDirectoryName(name string) string {
 	// Ensure the name doesn't have any remaining problematic characters
 	sanitized := replacer.Replace(name)
 	
+	// Convert to lowercase
+	sanitized = strings.ToLower(sanitized)
+	
 	// If the name is empty after sanitization, use a default name
 	if sanitized == "" {
 		return "lab"
