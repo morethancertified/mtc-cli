@@ -1,11 +1,15 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/erikgeiser/promptkit/confirmation"
+	"github.com/erikgeiser/promptkit/selection"
 	"github.com/morethancertified/mtc-cli/internal/mtcapi"
 	"github.com/morethancertified/mtc-cli/internal/types"
 	"github.com/morethancertified/mtc-cli/internal/widgets"
@@ -19,6 +23,41 @@ var submitCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Example: "mtc submit cm4ppz694200blze51ts1234",
 	Run: func(cmd *cobra.Command, args []string) {
+		// Check for a local project config file and create one if it doesn't exist.
+		wd, err := os.Getwd()
+		cobra.CheckErr(err)
+		localConfigFile := filepath.Join(wd, ".mtc.json")
+
+		if _, err := os.Stat(localConfigFile); os.IsNotExist(err) {
+			fmt.Println("First time submitting for this project.")
+			fmt.Println("Please select the platform this lab is for:")
+
+			platformOptions := []*selection.Choice{
+				{String: "New Learning Platform", Value: "https://labs.morethancertified.com/api/v1"},
+				{String: "Legacy Video Platform", Value: "https://app.morethancertified.com/api/v1"},
+			}
+
+			sp := selection.New("Choose the platform:", platformOptions)
+			choice, err := sp.RunPrompt()
+			cobra.CheckErr(err)
+
+			selectedURL := choice.Value
+
+			// Create the config map and save it to .mtc.json
+			config := map[string]interface{}{"api_base_url": selectedURL}
+			file, err := json.MarshalIndent(config, "", "  ")
+			cobra.CheckErr(err)
+
+			err = os.WriteFile(localConfigFile, file, 0644)
+			cobra.CheckErr(err)
+
+			// Set the value for the current run and merge in the new config
+			viper.Set("api_base_url", selectedURL)
+			viper.MergeInConfig() // Re-read to ensure it's loaded for this session
+			fmt.Println("Configuration saved to", localConfigFile)
+			fmt.Println("------------------------------------------------------------------")
+		}
+
 		lessonToken := args[0]
 		reset, _ := cmd.Flags().GetBool("reset")
 		apiClient := mtcapi.New(viper.GetString("api_base_url"))
