@@ -29,7 +29,6 @@ func init() {
 }
 
 func initConfig() {
-	// First, handle the global config file exactly as before.
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 		err := viper.ReadInConfig()

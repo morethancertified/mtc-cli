@@ -32,16 +32,24 @@ var submitCmd = &cobra.Command{
 			fmt.Println("First time submitting for this project.")
 			fmt.Println("Please select the platform this lab is for:")
 
-			platformOptions := []*selection.Choice{
-				{String: "New Learning Platform", Value: "https://labs.morethancertified.com/api/v1"},
-				{String: "Legacy Video Platform", Value: "https://app.morethancertified.com/api/v1"},
+			// Create a map of display names to API URLs
+			platformMap := map[string]string{
+				"New Learning Platform (https://labs.morethancertified.com/api/v1)": "https://labs.morethancertified.com/api/v1",
+				"Legacy Video Platform (https://app.morethancertified.com/api/v1)":  "https://app.morethancertified.com/api/v1",
+			}
+
+			// Create simple string choices for clean display
+			platformOptions := []string{
+				"New Learning Platform (https://labs.morethancertified.com/api/v1)",
+				"Legacy Video Platform (https://app.morethancertified.com/api/v1)",
 			}
 
 			sp := selection.New("Choose the platform:", platformOptions)
 			choice, err := sp.RunPrompt()
 			cobra.CheckErr(err)
 
-			selectedURL := choice.Value
+			// Look up the URL for the selected platform
+			selectedURL := platformMap[choice]
 
 			// Create the config map and save it to .mtc.json
 			config := map[string]interface{}{"api_base_url": selectedURL}
