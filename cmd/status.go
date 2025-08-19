@@ -90,7 +90,8 @@ var statusCmd = &cobra.Command{
 		}
 
 		// Launch TUI for interactive grading report
-		err = tui.RunGradingReport(lesson.Tasks)
+		// Note: status command doesn't support resubmit, so we pass empty token and ignore resubmit result
+		_, err = tui.RunGradingReport(lesson.Tasks, "")
 		if err != nil {
 			// Fallback to simple text output if TUI fails
 			fmt.Printf("Error launching TUI: %s\n", err)

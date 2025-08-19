@@ -95,6 +95,8 @@ type model struct {
 	quitting          bool
 	tasks             []types.Task
 	showingExplanation bool
+	lessonToken       string
+	resubmitting      bool
 }
 
 func (m model) Init() tea.Cmd {
@@ -105,9 +107,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetWidth(listWidth)
-		m.list.SetHeight(msg.Height - 4)
+		m.list.SetHeight(msg.Height - 7) // Reduced by 3 more lines to account for footer
 		m.viewport.Width = detailWidth
-		m.viewport.Height = msg.Height - 6
+		m.viewport.Height = msg.Height - 9 // Reduced by 3 more lines to account for footer
 		return m, nil
 
 	case tea.KeyMsg:
@@ -133,6 +135,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.showingExplanation = !m.showingExplanation
 			m.updateDetail()
 			return m, nil
+
+		case msg.String() == "r":
+			// Resubmit lesson
+			m.resubmitting = true
+			return m, tea.Quit
 
 		// Handle viewport scrolling for long AI explanations
 		case msg.String() == "j" || msg.String() == "down":
@@ -209,14 +216,25 @@ func (m model) View() string {
 	detailViewStyled := detailBoxStyle.Height(detailBoxHeight)
 	detailView := detailViewStyled.Render(m.viewport.View())
 
-	return lipgloss.JoinHorizontal(
+	// Add footer with resubmit option
+	footer := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("241")).
+		Render("\n\nPress 'r' to resubmit lesson • Press 'q' to quit")
+
+	mainView := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		listView,
 		detailView,
 	)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		mainView,
+		footer,
+	)
 }
 
-func RunGradingReport(tasks []types.Task) error {
+func RunGradingReport(tasks []types.Task, lessonToken string) (bool, error) {
 	items := make([]list.Item, len(tasks))
 	for i, task := range tasks {
 		items[i] = item{task: task}
@@ -233,13 +251,23 @@ func RunGradingReport(tasks []types.Task) error {
 	l.Styles.HelpStyle = helpStyle
 
 	m := model{
-		list:  l,
-		tasks: tasks,
+		list:        l,
+		tasks:       tasks,
+		lessonToken: lessonToken,
 	}
-	m.viewport = viewport.New(detailWidth-4, 18)
+	m.viewport = viewport.New(detailWidth-4, 15) // Reduced height to account for footer
 	m.updateDetail()
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
-	_, err := p.Run()
-	return err
+	finalModel, err := p.Run()
+	if err != nil {
+		return false, err
+	}
+
+	// Check if user wants to resubmit
+	if finalModel, ok := finalModel.(model); ok {
+		return finalModel.resubmitting, nil
+	}
+
+	return false, nil
 }

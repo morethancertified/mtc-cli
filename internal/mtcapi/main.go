@@ -18,22 +18,32 @@ func New(baseURL string) *MtcApiClient {
 	httpClient := resty.New()
 	httpClient.SetBaseURL(baseURL)
 
-	// Add Bearer token if authenticated
-	if token, err := auth.GetToken(); err == nil {
-		httpClient.SetAuthToken(token)
-	}
-
 	return &MtcApiClient{
 		BaseURL:    baseURL,
 		httpClient: httpClient,
 	}
 }
 
+// ensureAuthenticated checks for a valid token and sets it on the request
+func (c *MtcApiClient) ensureAuthenticated(req *resty.Request) error {
+	token, err := auth.GetToken()
+	if err != nil {
+		return fmt.Errorf("authentication required: please run 'sprintctl login' first")
+	}
+	
+	req.SetAuthToken(token)
+	return nil
+}
+
 func (c *MtcApiClient) GetLesson(lessonToken string) (types.Lesson, error) {
-	res, err := c.httpClient.R().
-		// SetDebug(true).
-		SetResult(&types.Lesson{}).
-		Get("/lessons/" + lessonToken)
+	req := c.httpClient.R().
+		SetResult(&types.Lesson{})
+	
+	if err := c.ensureAuthenticated(req); err != nil {
+		return types.Lesson{}, err
+	}
+	
+	res, err := req.Get("/lessons/" + lessonToken)
 	if err != nil {
 		return types.Lesson{}, err
 	}
@@ -48,13 +58,18 @@ func (c *MtcApiClient) GetLesson(lessonToken string) (types.Lesson, error) {
 }
 
 func (c *MtcApiClient) SubmitLesson(lessonToken string, cliCommandResults []types.CLICommandResult) (types.Lesson, error) {
-	res, err := c.httpClient.R().
+	req := c.httpClient.R().
 		SetBody(types.SubmitLessonRequest{
 			Type:              types.SubmitLessonRequestTypeCommandResults,
 			CliCommandResults: cliCommandResults,
 		}).
-		SetResult(&types.Lesson{}).
-		Post("/lessons/" + lessonToken + "/submit")
+		SetResult(&types.Lesson{})
+	
+	if err := c.ensureAuthenticated(req); err != nil {
+		return types.Lesson{}, err
+	}
+	
+	res, err := req.Post("/lessons/" + lessonToken + "/submit")
 	if err != nil {
 		return types.Lesson{}, err
 	}
@@ -67,9 +82,14 @@ func (c *MtcApiClient) SubmitLesson(lessonToken string, cliCommandResults []type
 }
 
 func (c *MtcApiClient) ResetLesson(lessonToken string) (types.Lesson, error) {
-	res, err := c.httpClient.R().
-		SetResult(&types.Lesson{}).
-		Post("/lessons/" + lessonToken + "/reset")
+	req := c.httpClient.R().
+		SetResult(&types.Lesson{})
+	
+	if err := c.ensureAuthenticated(req); err != nil {
+		return types.Lesson{}, err
+	}
+	
+	res, err := req.Post("/lessons/" + lessonToken + "/reset")
 	if err != nil {
 		return types.Lesson{}, err
 	}

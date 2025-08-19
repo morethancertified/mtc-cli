@@ -90,81 +90,106 @@ var submitCmd = &cobra.Command{
 		}
 
 		printTasksTable(lesson.Tasks)
-		fmt.Println("\nWe will now run the following command(s) to validate your lesson:")
-		fmt.Println("------------------------------------------------------------------")
-		for _, command := range lesson.CliCommands {
-			fmt.Println(command)
-		}
-		fmt.Println("------------------------------------------------------------------")
-
-		input := confirmation.New("Continue?", confirmation.Yes)
-		ready, err := input.RunPrompt()
-		if err != nil {
-			fmt.Println("Error getting confirmation:", err)
-			return
-		}
-		if !ready {
-			fmt.Println("Aborting...")
-			return
-		}
-
-		widgets.RunProgressBar()
-
-		cliCommandResults := []types.CLICommandResult{}
-		for _, command := range lesson.CliCommands {
-			cliCommandResult := types.CLICommandResult{
-				Command: command,
-			}
-
-			cmd := exec.Command("sh", "-c", "LANG=en_US.UTF-8 "+command)
-
-			b, err := cmd.Output()
-			if ee, ok := err.(*exec.ExitError); ok {
-				cliCommandResult.ExitCode = ee.ExitCode()
-				cliCommandResult.Stderr = strings.TrimRight(string(ee.Stderr), "\n\t\r")
-			} else if err != nil {
-				cliCommandResult.ExitCode = -69
-			} else {
-				cliCommandResult.Stdout = strings.TrimRight(string(b), "\n\t\r")
-			}
-
-			cliCommandResults = append(cliCommandResults, cliCommandResult)
-		}
-
-		lesson, err = apiClient.SubmitLesson(lessonToken, cliCommandResults)
-		if err != nil {
-			fmt.Println("Error submitting lesson:", err)
-			return
-		}
-
-		fmt.Println("\nGrading complete!")
-
-		// Debug: Print what we got from the API
-		fmt.Printf("DEBUG - Received %d tasks from API\n", len(lesson.Tasks))
-		for i, task := range lesson.Tasks {
-			fmt.Printf("Task %d: %s (Status: %s, AI Explanation length: %d)\n", 
-				i+1, task.Title, task.Status, len(task.AiExplanation))
-		}
-
-		// Cache lesson data for status command
-		err = cacheLessonData(lesson, localConfigFile)
-		if err != nil {
-			fmt.Printf("Warning: Could not cache lesson data: %s\n", err)
-		}
-
-		// Launch TUI for interactive grading report
-		err = tui.RunGradingReport(lesson.Tasks)
-		if err != nil {
-			// Fallback to table view if TUI fails
-			printTasksTable(lesson.Tasks)
-			fmt.Println()
-		}
+		
+		// Run the submission flow
+		runSubmissionFlow(lessonToken, apiClient)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(submitCmd)
 	submitCmd.Flags().BoolP("reset", "r", false, "Reset the lesson tasks")
+}
+
+func runSubmissionFlow(lessonToken string, apiClient *mtcapi.MtcApiClient) {
+	// Get current working directory for config file
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error getting working directory:", err)
+		return
+	}
+	localConfigFile := filepath.Join(wd, ".sprint.json")
+
+	// Get fresh lesson data
+	lesson, err := apiClient.GetLesson(lessonToken)
+	if err != nil {
+		fmt.Println("Error getting lesson:", err)
+		return
+	}
+
+	fmt.Println("\nWe will now run the following command(s) to validate your lesson:")
+	fmt.Println("------------------------------------------------------------------")
+	for _, command := range lesson.CliCommands {
+		fmt.Println(command)
+	}
+	fmt.Println("------------------------------------------------------------------")
+
+	input := confirmation.New("Continue?", confirmation.Yes)
+	ready, err := input.RunPrompt()
+	if err != nil {
+		fmt.Println("Error getting confirmation:", err)
+		return
+	}
+	if !ready {
+		fmt.Println("Aborting...")
+		return
+	}
+
+	widgets.RunProgressBar()
+
+	cliCommandResults := []types.CLICommandResult{}
+	for _, command := range lesson.CliCommands {
+		cliCommandResult := types.CLICommandResult{
+			Command: command,
+		}
+
+		cmd := exec.Command("sh", "-c", "LANG=en_US.UTF-8 "+command)
+
+		b, err := cmd.Output()
+		if ee, ok := err.(*exec.ExitError); ok {
+			cliCommandResult.ExitCode = ee.ExitCode()
+			cliCommandResult.Stderr = strings.TrimRight(string(ee.Stderr), "\n\t\r")
+		} else if err != nil {
+			cliCommandResult.ExitCode = -69
+		} else {
+			cliCommandResult.Stdout = strings.TrimRight(string(b), "\n\t\r")
+		}
+
+		cliCommandResults = append(cliCommandResults, cliCommandResult)
+	}
+
+	lesson, err = apiClient.SubmitLesson(lessonToken, cliCommandResults)
+	if err != nil {
+		fmt.Println("Error submitting lesson:", err)
+		return
+	}
+
+	fmt.Println("\nGrading complete!")
+
+	// Debug: Print what we got from the API
+	fmt.Printf("DEBUG - Received %d tasks from API\n", len(lesson.Tasks))
+	for i, task := range lesson.Tasks {
+		fmt.Printf("Task %d: %s (Status: %s, AI Explanation length: %d)\n", 
+			i+1, task.Title, task.Status, len(task.AiExplanation))
+	}
+
+	// Cache lesson data for status command
+	err = cacheLessonData(lesson, localConfigFile)
+	if err != nil {
+		fmt.Printf("Warning: Could not cache lesson data: %s\n", err)
+	}
+
+	// Launch TUI for interactive grading report
+	shouldResubmit, err := tui.RunGradingReport(lesson.Tasks, lessonToken)
+	if err != nil {
+		// Fallback to table view if TUI fails
+		printTasksTable(lesson.Tasks)
+		fmt.Println()
+	} else if shouldResubmit {
+		// User wants to resubmit - run the submission flow again
+		fmt.Println("\nResubmitting lesson...")
+		runSubmissionFlow(lessonToken, apiClient)
+	}
 }
 
 func cacheLessonData(lesson types.Lesson, configFile string) error {
