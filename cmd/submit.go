@@ -11,6 +11,7 @@ import (
 	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/erikgeiser/promptkit/selection"
 	"github.com/morethancertified/mtc-cli/internal/mtcapi"
+	"github.com/morethancertified/mtc-cli/internal/tui"
 	"github.com/morethancertified/mtc-cli/internal/types"
 	"github.com/morethancertified/mtc-cli/internal/widgets"
 	"github.com/spf13/cobra"
@@ -136,8 +137,19 @@ var submitCmd = &cobra.Command{
 
 		fmt.Println("\nGrading complete!")
 
-		printTasksTable(lesson.Tasks)
-		fmt.Println()
+		// Cache lesson data for status command
+		err = cacheLessonData(lesson, localConfigFile)
+		if err != nil {
+			fmt.Printf("Warning: Could not cache lesson data: %s\n", err)
+		}
+
+		// Launch TUI for interactive grading report
+		err = tui.RunGradingReport(lesson.Tasks)
+		if err != nil {
+			// Fallback to table view if TUI fails
+			printTasksTable(lesson.Tasks)
+			fmt.Println()
+		}
 	},
 }
 
@@ -146,23 +158,47 @@ func init() {
 	submitCmd.Flags().BoolP("reset", "r", false, "Reset the lesson tasks")
 }
 
+func cacheLessonData(lesson types.Lesson, configFile string) error {
+	// Read existing config
+	var config map[string]interface{}
+	if data, err := os.ReadFile(configFile); err == nil {
+		json.Unmarshal(data, &config)
+	} else {
+		config = make(map[string]interface{})
+	}
+
+	// Add lesson data to config
+	config["last_lesson"] = lesson
+
+	// Write back to file
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configFile, data, 0644)
+}
+
 func printTasksTable(tasks []types.Task) {
 	fmt.Println("\nTASK STATUS:")
 	fmt.Println("------------")
 	for _, task := range tasks {
-		status := "⚪"
-		if task.Status == "COMPLETED" {
+		var status string
+		switch task.Status {
+		case "COMPLETED":
 			status = "✅"
-		} else if task.Status == "FAILED" {
+		case "FAILED":
 			status = "❌"
+		default:
+			status = "⏳"
 		}
-
 		fmt.Printf("%s %s\n", status, task.Title)
 	}
-	// t := table.NewWriter()
-	// t.AppendHeader(table.Row{"Title", "Status"})
+
+	// t := table.New()
+	// t.SetHeaders("Task", "Status")
 	// for _, task := range tasks {
-	// 	t.AppendRow(table.Row{task.Title, task.Status})
+	// 	t.AddRow(task.Title, task.Status)
 	// }
 	// t.SetStyle(table.StyleLight)
 	// fmt.Println(t.Render())

@@ -43,7 +43,6 @@ func (c *MtcApiClient) GetLesson(lessonToken string) (types.Lesson, error) {
 
 func (c *MtcApiClient) SubmitLesson(lessonToken string, cliCommandResults []types.CLICommandResult) (types.Lesson, error) {
 	res, err := c.httpClient.R().
-		// SetDebug(true).
 		SetBody(types.SubmitLessonRequest{
 			Type:              types.SubmitLessonRequestTypeCommandResults,
 			CliCommandResults: cliCommandResults,
