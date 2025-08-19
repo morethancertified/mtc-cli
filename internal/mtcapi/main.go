@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/morethancertified/mtc-cli/internal/auth"
 	"github.com/morethancertified/mtc-cli/internal/types"
 )
 
@@ -16,6 +17,11 @@ type MtcApiClient struct {
 func New(baseURL string) *MtcApiClient {
 	httpClient := resty.New()
 	httpClient.SetBaseURL(baseURL)
+
+	// Add Bearer token if authenticated
+	if token, err := auth.GetToken(); err == nil {
+		httpClient.SetAuthToken(token)
+	}
 
 	return &MtcApiClient{
 		BaseURL:    baseURL,
