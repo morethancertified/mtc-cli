@@ -62,7 +62,7 @@ func initConfig() {
 	wd, err := os.Getwd()
 	cobra.CheckErr(err)
 	viper.AddConfigPath(wd)
-	viper.SetConfigName(".mtc")
+	viper.SetConfigName(".sprint")
 	viper.SetConfigType("json")
 
 	// MergeInConfig will not error if the file doesn't exist, which is perfect for us.

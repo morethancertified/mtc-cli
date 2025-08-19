@@ -54,7 +54,7 @@ var submitCmd = &cobra.Command{
 			// Look up the URL for the selected platform
 			selectedURL := platformMap[choice]
 
-			// Create the config map and save it to .mtc.json
+			// Create the config map and save it to .sprint.json
 			config := map[string]interface{}{"api_base_url": selectedURL}
 			file, err := json.MarshalIndent(config, "", "  ")
 			cobra.CheckErr(err)
