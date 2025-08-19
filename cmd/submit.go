@@ -27,7 +27,7 @@ var submitCmd = &cobra.Command{
 		// Check for a local project config file and create one if it doesn't exist.
 		wd, err := os.Getwd()
 		cobra.CheckErr(err)
-		localConfigFile := filepath.Join(wd, ".mtc.json")
+		localConfigFile := filepath.Join(wd, ".sprint.json")
 
 		if _, err := os.Stat(localConfigFile); os.IsNotExist(err) {
 			fmt.Println("First time submitting for this project.")
@@ -37,12 +37,14 @@ var submitCmd = &cobra.Command{
 			platformMap := map[string]string{
 				"New Learning Platform (https://labs.morethancertified.com/api/v1)": "https://labs.morethancertified.com/api/v1",
 				"Legacy Video Platform (https://app.morethancertified.com/api/v1)":  "https://app.morethancertified.com/api/v1",
+				"CloudSprints (https://cloudsprints.com/api/v1)": "https://cloudsprints.com/api/v1",
 			}
 
 			// Create simple string choices for clean display
 			platformOptions := []string{
 				"New Learning Platform (https://labs.morethancertified.com/api/v1)",
 				"Legacy Video Platform (https://app.morethancertified.com/api/v1)",
+				"CloudSprints (https://cloudsprints.com/api/v1)",
 			}
 
 			sp := selection.New("Choose the platform:", platformOptions)
@@ -136,6 +138,13 @@ var submitCmd = &cobra.Command{
 		}
 
 		fmt.Println("\nGrading complete!")
+
+		// Debug: Print what we got from the API
+		fmt.Printf("DEBUG - Received %d tasks from API\n", len(lesson.Tasks))
+		for i, task := range lesson.Tasks {
+			fmt.Printf("Task %d: %s (Status: %s, AI Explanation length: %d)\n", 
+				i+1, task.Title, task.Status, len(task.AiExplanation))
+		}
 
 		// Cache lesson data for status command
 		err = cacheLessonData(lesson, localConfigFile)
