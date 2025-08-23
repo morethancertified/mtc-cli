@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/morethancertified/mtc-cli/internal/auth"
+	"github.com/morethancertified/mtc-cli/internal/styles"
 	"github.com/spf13/cobra"
 )
 
@@ -18,11 +19,11 @@ var authStatusCmd = &cobra.Command{
 	Short: "Show authentication status",
 	Run: func(cmd *cobra.Command, args []string) {
 		if auth.IsAuthenticated() {
-			fmt.Println("✅ Authenticated")
-			fmt.Println("You are signed in to CloudSprints.")
+			fmt.Println(styles.SuccessStyle.Render(" AUTHENTICATED "))
+			fmt.Println(styles.BoxStyle.Render("You are signed in to CloudSprints.\n\nAvailable commands:\n• sprintctl submit <lesson-token>\n• sprintctl status [lesson-token]\n• sprintctl logout"))
 		} else {
-			fmt.Println("❌ Not authenticated")
-			fmt.Println("Run 'sprintctl login' to sign in.")
+			fmt.Println(styles.ErrorStyle.Render(" NOT AUTHENTICATED "))
+			fmt.Println(styles.BoxStyle.Render("You are not signed in to CloudSprints.\n\nTo authenticate:\n• Run 'sprintctl login' to sign in with OTP\n• Run 'sprintctl auth token <token>' for manual token"))
 		}
 	},
 }
@@ -35,18 +36,19 @@ var authTokenCmd = &cobra.Command{
 		token := args[0]
 		
 		if len(token) < 10 {
-			fmt.Println("❌ Invalid token format")
+			fmt.Println(styles.ErrorStyle.Render(" INVALID TOKEN "))
+			fmt.Println(styles.BoxStyle.Render("Token must be at least 10 characters long"))
 			return
 		}
 		
 		err := auth.StoreToken(token)
 		if err != nil {
-			fmt.Printf("❌ Error storing token: %v\n", err)
+			fmt.Println(styles.ErrorStyle.Render(" STORAGE ERROR "), err)
 			return
 		}
 		
-		fmt.Println("✅ Token stored successfully!")
-		fmt.Println("You can now use sprintctl commands.")
+		fmt.Println(styles.SuccessStyle.Render(" TOKEN STORED! "))
+		fmt.Println(styles.BoxStyle.Render("Authentication token stored successfully!\nYou can now use sprintctl commands."))
 	},
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/morethancertified/mtc-cli/internal/auth"
+	"github.com/morethancertified/mtc-cli/internal/styles"
 	"github.com/spf13/cobra"
 )
 
@@ -35,26 +36,29 @@ You can provide your email as an argument or enter it when prompted.`,
 		
 		// Validate email format (basic check)
 		if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
-			fmt.Println("Please enter a valid email address")
+			fmt.Println(styles.ErrorStyle.Render(" INVALID EMAIL "))
+			fmt.Println(styles.BoxStyle.Render("Please enter a valid email address"))
 			return
 		}
 		
 		// Check if already authenticated
 		if auth.IsAuthenticated() {
-			fmt.Println("You are already authenticated!")
-			fmt.Println("Run 'sprintctl logout' to sign out first.")
+			fmt.Println(styles.WarningStyle.Render(" ALREADY AUTHENTICATED "))
+			fmt.Println(styles.BoxStyle.Render("You are already authenticated!\nRun 'sprintctl logout' to sign out first."))
 			return
 		}
 		
 		// Request OTP
-		fmt.Printf("Sending OTP to %s...\n", email)
+		fmt.Println(styles.InfoStyle.Render(" SENDING OTP "))
+		fmt.Println(styles.BoxStyle.Render(fmt.Sprintf("Sending one-time password to: %s", email)))
 		err := auth.LoginWithOTP(email)
 		if err != nil {
-			fmt.Printf("Error sending OTP: %v\n", err)
+			fmt.Println(styles.ErrorStyle.Render(" OTP ERROR "), err)
 			return
 		}
 		
-		fmt.Println("✅ OTP sent! Check your email.")
+		fmt.Println(styles.SuccessStyle.Render(" OTP SENT! "))
+		fmt.Println(styles.BoxStyle.Render("Check your email for the 6-digit verification code"))
 		
 		// Prompt for OTP code
 		codeInput := textinput.New("Enter the 6-digit code from your email:")
@@ -67,15 +71,15 @@ You can provide your email as an argument or enter it when prompted.`,
 		}
 		
 		// Verify OTP
-		fmt.Println("Verifying code...")
+		fmt.Println(styles.InfoStyle.Render(" VERIFYING CODE "))
 		err = auth.VerifyOTP(email, code)
 		if err != nil {
-			fmt.Printf("❌ Authentication failed: %v\n", err)
+			fmt.Println(styles.ErrorStyle.Render(" AUTHENTICATION FAILED "), err)
 			return
 		}
 		
-		fmt.Println("✅ Successfully authenticated!")
-		fmt.Println("You can now use sprintctl to submit lessons and access your data.")
+		fmt.Println(styles.SuccessStyle.Render(" AUTHENTICATION SUCCESS! "))
+		fmt.Println(styles.BoxStyle.Render("You can now use sprintctl to submit lessons and access your data.\n\nNext steps:\n• Run 'sprintctl submit <lesson-token>' to grade a lesson\n• Run 'sprintctl status' to view cached results"))
 	},
 }
 

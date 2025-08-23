@@ -6,10 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/morethancertified/mtc-cli/internal/mtcapi"
+	"github.com/morethancertified/mtc-cli/internal/styles"
 	"github.com/morethancertified/mtc-cli/internal/tui"
 	"github.com/morethancertified/mtc-cli/internal/types"
 	"github.com/spf13/cobra"
-	"github.com/morethancertified/mtc-cli/internal/mtcapi"
 )
 
 var statusCmd = &cobra.Command{
@@ -37,27 +38,28 @@ var statusCmd = &cobra.Command{
 			}
 			
 			if config.ApiBaseURL == "" {
-				fmt.Println("No API base URL configured. Run 'sprintctl submit' first.")
+				fmt.Println(styles.ErrorStyle.Render(" CONFIGURATION ERROR "))
+				fmt.Println(styles.BoxStyle.Render("No API base URL configured.\nRun 'sprintctl submit' first to set up your configuration."))
 				return
 			}
 			
 			apiClient := mtcapi.New(config.ApiBaseURL)
 			lesson, err = apiClient.GetLesson(lessonToken)
 			if err != nil {
-				fmt.Printf("Error getting lesson status: %s\n", err)
+				fmt.Println(styles.ErrorStyle.Render(" API ERROR "), err)
 				return
 			}
 			
-			fmt.Printf("Fresh status for lesson %s:\n", lessonToken)
+			fmt.Println(styles.InfoStyle.Render(" FRESH STATUS "))
+			fmt.Println(styles.BoxStyle.Render(fmt.Sprintf("Lesson Token: %s", lessonToken)))
 		} else {
 			// Use cached data (existing behavior)
 			localConfigFile := filepath.Join(wd, ".sprint.json")
 
 			// Check if config file exists
 			if _, err := os.Stat(localConfigFile); os.IsNotExist(err) {
-				fmt.Println("No cached grading report found.")
-				fmt.Println("Run 'sprintctl submit <lesson-token>' to generate a report.")
-				fmt.Println("Or run 'sprintctl status <lesson-token>' to get fresh status.")
+				fmt.Println(styles.WarningStyle.Render(" NO CACHED DATA "))
+				fmt.Println(styles.BoxStyle.Render("No cached grading report found.\n\nOptions:\n• Run 'sprintctl submit <lesson-token>' to generate a report\n• Run 'sprintctl status <lesson-token>' to get fresh status"))
 				return
 			}
 
@@ -86,7 +88,8 @@ var statusCmd = &cobra.Command{
 			}
 
 			lesson = config.LastLesson
-			fmt.Println("Cached lesson status:")
+			fmt.Println(styles.InfoStyle.Render(" CACHED STATUS "))
+			fmt.Println(styles.BoxStyle.Render("Using cached lesson data from last submission"))
 		}
 
 		// Launch TUI for interactive grading report
@@ -94,8 +97,8 @@ var statusCmd = &cobra.Command{
 		_, err = tui.RunGradingReport(lesson.Tasks, "")
 		if err != nil {
 			// Fallback to simple text output if TUI fails
-			fmt.Printf("Error launching TUI: %s\n", err)
-			fmt.Println("\nFalling back to simple output:")
+			fmt.Println(styles.WarningStyle.Render(" TUI ERROR "), err)
+			fmt.Println(styles.SectionHeaderStyle.Render("📋 FALLBACK OUTPUT"))
 			printTasksTable(lesson.Tasks)
 		}
 	},

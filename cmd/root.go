@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/morethancertified/mtc-cli/internal/styles"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,7 +17,14 @@ var Version = "v0.0.0"
 var rootCmd = &cobra.Command{
 	Use:     "mtc-cli",
 	Short:   "The MoreThanCertified CLI",
-	Long:    `This program is used to validate your MoreThanCertified lesson tasks interactively on your local machine.`,
+	Long: fmt.Sprintf(`%s
+
+%s
+
+%s`,
+		styles.CreateBanner("🚀 SPRINTCTL 🚀"),
+		styles.SubtitleStyle.Render("The MoreThanCertified CLI for interactive lesson validation"),
+		styles.BoxStyle.Render("This program validates your MoreThanCertified lesson tasks interactively on your local machine.\n\nFeatures:\n• Interactive grading reports\n• AI-powered feedback\n• Sprint-based learning workflow\n• Real-time task validation")),
 	Version: Version,
 }
 
