@@ -161,6 +161,26 @@ func runSubmissionFlow(lessonToken string, apiClient *mtcapi.MtcApiClient) {
 		}
 
 		cliCommandResults = append(cliCommandResults, cliCommandResult)
+
+		// Check if command failed - abort submission if:
+		// 1. Non-zero exit code, OR
+		// 2. Output contains "validation failed" (from || echo "validation failed")
+		validationFailed := cliCommandResult.ExitCode != 0 || 
+			strings.Contains(cliCommandResult.Stdout, "validation failed")
+
+		if validationFailed {
+			fmt.Println(styles.ErrorStyle.Render(" VALIDATION FAILED "))
+			fmt.Println(styles.BoxStyle.Render(fmt.Sprintf("Command exited with code %d", cliCommandResult.ExitCode)))
+			if cliCommandResult.Stderr != "" {
+				fmt.Println(styles.CodeBlockStyle.Render("Error output:\n" + cliCommandResult.Stderr))
+			}
+			if cliCommandResult.Stdout != "" {
+				fmt.Println(styles.CodeBlockStyle.Render("Output:\n" + cliCommandResult.Stdout))
+			}
+			fmt.Println(styles.WarningStyle.Render(" SUBMISSION ABORTED "))
+			fmt.Println(styles.BoxStyle.Render("Fix the errors above and try again."))
+			return
+		}
 	}
 
 	lesson, err = apiClient.SubmitLesson(lessonToken, cliCommandResults)
