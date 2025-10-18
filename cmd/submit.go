@@ -122,35 +122,49 @@ func runSubmissionFlow(lessonToken string, apiClient *mtcapi.MtcApiClient) {
 
 	// Display submission info
 	fmt.Println(styles.SectionHeaderStyle.Render("🚀 SUBMIT FOR GRADING"))
-	fmt.Printf("Your lesson will be validated with %d command(s) and submitted for AI grading.\n", len(lesson.CliCommands))
-	fmt.Println(styles.InfoStyle.Render(" TIP ") + " Type 'c' to view commands, then press Enter\n")
+	fmt.Printf("Your lesson will be validated with %d command(s) and submitted for AI grading.\n\n", len(lesson.CliCommands))
 	
-	// Ask if they want to see commands first
-	showCmd := confirmation.New("View validation commands first?", confirmation.No)
-	showCommands, err := showCmd.RunPrompt()
-	if err != nil {
-		fmt.Println("Error getting input:", err)
-		return
-	}
-	
-	if showCommands {
-		fmt.Println("\n" + styles.InfoStyle.Render(" VALIDATION COMMANDS "))
-		for i, command := range lesson.CliCommands {
-			fmt.Printf("  %d. %s\n", i+1, styles.CommandStyle.Render(command))
-		}
-		fmt.Println()
-	}
-	
-	// Main submission confirmation
-	input := confirmation.New("Submit lesson for grading?", confirmation.Yes)
+	// Main submission confirmation with option to view commands
+	input := confirmation.New("Submit lesson for grading? (type 'n' to view commands first)", confirmation.Yes)
 	ready, err := input.RunPrompt()
 	if err != nil {
 		fmt.Println("Error getting confirmation:", err)
 		return
 	}
+	
+	// Check if user typed 'c' to view commands
+	// Note: promptkit doesn't expose the raw input, so we'll use a different approach
+	// If user said no, ask if they want to see commands
 	if !ready {
-		fmt.Println(styles.WarningStyle.Render(" ABORTED "))
-		return
+		showCmd := confirmation.New("View validation commands?", confirmation.Yes)
+		showCommands, err := showCmd.RunPrompt()
+		if err != nil {
+			fmt.Println("Error getting input:", err)
+			return
+		}
+		
+		if showCommands {
+			fmt.Println("\n" + styles.InfoStyle.Render(" VALIDATION COMMANDS "))
+			for i, command := range lesson.CliCommands {
+				fmt.Printf("  %d. %s\n", i+1, styles.CommandStyle.Render(command))
+			}
+			fmt.Println()
+			
+			// Ask again after showing commands
+			input := confirmation.New("Submit lesson for grading?", confirmation.Yes)
+			ready, err := input.RunPrompt()
+			if err != nil {
+				fmt.Println("Error getting confirmation:", err)
+				return
+			}
+			if !ready {
+				fmt.Println(styles.WarningStyle.Render(" ABORTED "))
+				return
+			}
+		} else {
+			fmt.Println(styles.WarningStyle.Render(" ABORTED "))
+			return
+		}
 	}
 
 	widgets.RunProgressBar()
@@ -246,8 +260,10 @@ func runSubmissionFlow(lessonToken string, apiClient *mtcapi.MtcApiClient) {
 		printTasksTable(lesson.Tasks)
 		fmt.Println()
 	} else if shouldResubmit {
-		// User wants to resubmit - run the submission flow again
-		fmt.Println("\n" + styles.InfoStyle.Render(" RESUBMITTING LESSON "))
+		// User wants to resubmit - clear screen and run submission flow again
+		fmt.Print("\033[H\033[2J") // Clear screen
+		fmt.Println(styles.InfoStyle.Render(" RESUBMITTING LESSON "))
+		fmt.Println()
 		runSubmissionFlow(lessonToken, apiClient)
 	}
 }
