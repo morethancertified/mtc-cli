@@ -86,13 +86,14 @@ var submitCmd = &cobra.Command{
 				fmt.Println(styles.ErrorStyle.Render(" ERROR "), "resetting lesson:", err)
 				return
 			}
-			fmt.Println(styles.SuccessStyle.Render(" LESSON RESET "))
+			fmt.Println("\n" + styles.SuccessStyle.Render(" LESSON RESET "))
 			printTasksTable(lesson.Tasks)
 			return
 		}
 
 		printTasksTable(lesson.Tasks)
-		
+		fmt.Println()
+
 		// Run the submission flow
 		runSubmissionFlow(lessonToken, apiClient)
 	},
@@ -119,17 +120,29 @@ func runSubmissionFlow(lessonToken string, apiClient *mtcapi.MtcApiClient) {
 		return
 	}
 
-	fmt.Println(styles.SectionHeaderStyle.Render("🔍 VALIDATION COMMANDS"))
-	fmt.Println(styles.BoxStyle.Render("The following commands will be executed to validate your lesson:"))
+	// Display submission info
+	fmt.Println(styles.SectionHeaderStyle.Render("🚀 SUBMIT FOR GRADING"))
+	fmt.Printf("Your lesson will be validated with %d command(s) and submitted for AI grading.\n", len(lesson.CliCommands))
+	fmt.Println(styles.InfoStyle.Render(" TIP ") + " Type 'c' to view commands, then press Enter\n")
 	
-	commandsText := ""
-	for _, command := range lesson.CliCommands {
-		commandsText += styles.CommandStyle.Render(command) + "\n"
+	// Ask if they want to see commands first
+	showCmd := confirmation.New("View validation commands first?", confirmation.No)
+	showCommands, err := showCmd.RunPrompt()
+	if err != nil {
+		fmt.Println("Error getting input:", err)
+		return
 	}
-	fmt.Println(styles.CodeBlockStyle.Render(commandsText))
-	fmt.Println(styles.Separator(60))
-
-	input := confirmation.New("Continue?", confirmation.Yes)
+	
+	if showCommands {
+		fmt.Println("\n" + styles.InfoStyle.Render(" VALIDATION COMMANDS "))
+		for i, command := range lesson.CliCommands {
+			fmt.Printf("  %d. %s\n", i+1, styles.CommandStyle.Render(command))
+		}
+		fmt.Println()
+	}
+	
+	// Main submission confirmation
+	input := confirmation.New("Submit lesson for grading?", confirmation.Yes)
 	ready, err := input.RunPrompt()
 	if err != nil {
 		fmt.Println("Error getting confirmation:", err)
@@ -169,27 +182,33 @@ func runSubmissionFlow(lessonToken string, apiClient *mtcapi.MtcApiClient) {
 			strings.Contains(cliCommandResult.Stdout, "validation failed")
 
 		if validationFailed {
-			fmt.Println(styles.ErrorStyle.Render(" VALIDATION FAILED "))
-			fmt.Println(styles.BoxStyle.Render(fmt.Sprintf("Command exited with code %d", cliCommandResult.ExitCode)))
+			fmt.Println("\n" + styles.ErrorStyle.Render(" VALIDATION FAILED "))
+			fmt.Printf("Command exited with code %d\n\n", cliCommandResult.ExitCode)
 			if cliCommandResult.Stderr != "" {
-				fmt.Println(styles.CodeBlockStyle.Render("Error output:\n" + cliCommandResult.Stderr))
+				fmt.Println(styles.ErrorStyle.Render(" ERROR OUTPUT "))
+				fmt.Println(cliCommandResult.Stderr)
+				fmt.Println()
 			}
 			if cliCommandResult.Stdout != "" {
-				fmt.Println(styles.CodeBlockStyle.Render("Output:\n" + cliCommandResult.Stdout))
+				fmt.Println(styles.InfoStyle.Render(" OUTPUT "))
+				fmt.Println(cliCommandResult.Stdout)
+				fmt.Println()
 			}
 			fmt.Println(styles.WarningStyle.Render(" SUBMISSION ABORTED "))
-			fmt.Println(styles.BoxStyle.Render("Fix the errors above and try again."))
+			fmt.Println("Fix the errors above and try again.")
+			fmt.Println()
 			return
 		}
 	}
 
 	lesson, err = apiClient.SubmitLesson(lessonToken, cliCommandResults)
 	if err != nil {
-		fmt.Println(styles.ErrorStyle.Render(" SUBMISSION ERROR "), err)
+		fmt.Println("\n" + styles.ErrorStyle.Render(" SUBMISSION ERROR "))
+		fmt.Println(err)
 		return
 	}
 
-	fmt.Println(styles.SuccessStyle.Render(" GRADING COMPLETE! "))
+	fmt.Println("\n" + styles.SuccessStyle.Render(" GRADING COMPLETE! "))
 
 	// Show grading results summary
 	completed := 0
@@ -208,15 +227,17 @@ func runSubmissionFlow(lessonToken string, apiClient *mtcapi.MtcApiClient) {
 		summaryText += fmt.Sprintf(" | Failed: %d", failed)
 	}
 	
-	fmt.Println(styles.BoxStyle.Render(summaryText))
+	fmt.Println(summaryText)
 	fmt.Println(styles.ProgressBar(completed, len(lesson.Tasks), 40))
+	fmt.Println()
 
 	// Cache lesson data for status command
 	err = cacheLessonData(lesson, localConfigFile)
 	if err != nil {
-		fmt.Printf("Warning: Could not cache lesson data: %s\n", err)
+		fmt.Printf("Warning: Could not cache lesson data: %s\n\n", err)
 	}
 
+	fmt.Println()
 	// Launch TUI for interactive grading report
 	shouldResubmit, err := tui.RunGradingReport(lesson.Tasks, lessonToken)
 	if err != nil {
@@ -226,7 +247,7 @@ func runSubmissionFlow(lessonToken string, apiClient *mtcapi.MtcApiClient) {
 		fmt.Println()
 	} else if shouldResubmit {
 		// User wants to resubmit - run the submission flow again
-		fmt.Println(styles.InfoStyle.Render(" RESUBMITTING LESSON "))
+		fmt.Println("\n" + styles.InfoStyle.Render(" RESUBMITTING LESSON "))
 		runSubmissionFlow(lessonToken, apiClient)
 	}
 }
@@ -253,7 +274,7 @@ func cacheLessonData(lesson types.Lesson, configFile string) error {
 }
 
 func printTasksTable(tasks []types.Task) {
-	fmt.Println(styles.SectionHeaderStyle.Render("📋 TASK STATUS"))
+	fmt.Println("\n" + styles.SectionHeaderStyle.Render("📋 TASK STATUS"))
 	
 	for _, task := range tasks {
 		statusIcon := styles.StatusIcon(task.Status)

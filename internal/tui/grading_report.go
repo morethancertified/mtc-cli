@@ -19,38 +19,29 @@ import (
 
 var (
 	titleStyle = lipgloss.NewStyle().
-		Foreground(styles.White).
-		Background(styles.PrimaryBlue).
-		Padding(0, 2).
-		Bold(true)
+		Foreground(styles.PrimaryBlue).
+		Bold(true).
+		PaddingLeft(1)
 
 	itemStyle = lipgloss.NewStyle().
-		PaddingLeft(4).
-		Foreground(styles.White)
+		PaddingLeft(2)
 
 	selectedItemStyle = lipgloss.NewStyle().
-		PaddingLeft(2).
-		Foreground(styles.White).
-		Background(styles.PrimaryBlue).
+		Foreground(styles.PrimaryBlue).
 		Bold(true)
 
 	paginationStyle = list.DefaultStyles().PaginationStyle.
-		PaddingLeft(4).
+		PaddingLeft(2).
 		Foreground(styles.Gray)
 
 	helpStyle = list.DefaultStyles().HelpStyle.
-		PaddingLeft(4).
-		PaddingBottom(1).
+		PaddingLeft(2).
 		Foreground(styles.Gray)
 
 	quitTextStyle = lipgloss.NewStyle().
-		Margin(1, 0, 2, 4).
+		Margin(1, 0, 1, 2).
 		Foreground(styles.PrimaryGreen).
 		Bold(true)
-
-	screenStyle = lipgloss.NewStyle().
-		Background(styles.PrimaryBlue).
-		Foreground(styles.White)
 )
 
 type item struct {
@@ -73,14 +64,12 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	statusIcon := styles.StatusIcon(i.task.Status)
 	str := fmt.Sprintf("%s %s", statusIcon, i.task.Title)
 
-	fn := itemStyle.Render
 	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render("▶ " + strings.Join(s, " "))
-		}
+		str = "▶ " + str
+		fmt.Fprint(w, selectedItemStyle.Render(str))
+	} else {
+		fmt.Fprint(w, itemStyle.Render(str))
 	}
-
-	fmt.Fprint(w, fn(str))
 }
 
 type model struct {
@@ -116,29 +105,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.height = 10
 		}
 		
-		// Reserve space for separator and footer
-		reservedHeight := 4 // separator + footer + padding
+		// Reserve space for title, separator and footer
+		reservedHeight := 5 // title + separator + footer + padding
 		availableHeight := m.height - reservedHeight
-		if availableHeight < 4 {
-			availableHeight = 4
+		if availableHeight < 6 {
+			availableHeight = 6
 		}
 		
-		// Split remaining space between list and feedback
-		m.topHeight = availableHeight / 2
+		// Give more space to task list (60/40 split)
+		m.topHeight = (availableHeight * 6) / 10
 		m.bottomHeight = availableHeight - m.topHeight
+		if m.topHeight < 3 {
+			m.topHeight = 3
+		}
+		if m.bottomHeight < 3 {
+			m.bottomHeight = 3
+		}
 
-		// Set list dimensions with minimum width
-		listWidth := m.width - 2
-		if listWidth < 1 {
-			listWidth = 1
+		// Set list dimensions
+		listWidth := m.width
+		if listWidth < 20 {
+			listWidth = 20
 		}
 		m.list.SetWidth(listWidth)
 		m.list.SetHeight(m.topHeight)
 
-		// Set viewport dimensions with minimum width
-		viewportWidth := m.width - 4
-		if viewportWidth < 1 {
-			viewportWidth = 1
+		// Set viewport dimensions
+		viewportWidth := m.width - 2
+		if viewportWidth < 20 {
+			viewportWidth = 20
 		}
 		m.viewport.Width = viewportWidth
 		m.viewport.Height = m.bottomHeight
@@ -217,27 +212,26 @@ func (m *model) updateDetail() {
 	m.viewport.SetContent("")
 	m.viewport.GotoTop()
 	
-	content := styles.SectionHeaderStyle.Render("🤖 AI FEEDBACK") + "\n\n"
+	var content string
 	
 	if m.showingExplanation {
 		if task.AiExplanation != "" {
-			// Wrap text based on current viewport width (fallback to a sensible width)
+			content = lipgloss.NewStyle().Bold(true).Render("🤖 AI Feedback:") + "\n\n"
+			// Wrap text based on current viewport width
 			wrapWidth := m.viewport.Width
 			if wrapWidth <= 0 {
 				wrapWidth = 80
 			}
-			wrappedText := wordwrap.String(task.AiExplanation, wrapWidth-4)
-			content += wrappedText + "\n"
+			wrappedText := wordwrap.String(task.AiExplanation, wrapWidth-2)
+			content += wrappedText
 		} else {
-			content += styles.WarningStyle.Render(" NO AI FEEDBACK ") + "\n"
-			content += "Grader may not have AI feedback enabled.\n"
+			content = lipgloss.NewStyle().Foreground(styles.Gray).Render("No AI feedback available for this task.")
 		}
 	} else {
 		if task.AiExplanation != "" {
-			content += styles.InfoStyle.Render(" Press Enter to view AI explanation ")
+			content = lipgloss.NewStyle().Foreground(styles.Gray).Italic(true).Render("Press Enter to view AI feedback...")
 		} else {
-			content += styles.WarningStyle.Render(" NO AI FEEDBACK ") + "\n"
-			content += "Grader may not have AI feedback enabled."
+			content = lipgloss.NewStyle().Foreground(styles.Gray).Render("No AI feedback available.")
 		}
 	}
 
@@ -249,51 +243,44 @@ func (m model) View() string {
 		return quitTextStyle.Render("Thanks for using sprintctl!")
 	}
 
-	// Top: tasks list (full width)
+	// Top: tasks list
 	listView := m.list.View()
 	
-	// Bottom: AI feedback with proper spacing
+	// Bottom: AI feedback
 	feedbackContent := m.viewport.View()
 	
-	// Create a clean separator with proper width
-	separatorWidth := m.width - 4
+	// Simple separator line
+	separatorWidth := m.width - 2
 	if separatorWidth < 1 {
 		separatorWidth = 1
 	}
-	separatorLine := strings.Repeat("─", separatorWidth)
 	separator := lipgloss.NewStyle().
-		Width(m.width).
-		Background(styles.PrimaryBlue).
 		Foreground(styles.Gray).
-		Padding(0, 1).
-		Render(separatorLine)
+		Render(strings.Repeat("─", separatorWidth))
 
-	// Footer with resubmit instructions
-	footerText := "Press 'r' to resubmit lesson • Press 'q' to quit"
-	if !m.showingExplanation {
-		footerText = "Press Enter to view AI feedback • Press 'r' to resubmit • Press 'q' to quit"
+	// Footer with instructions
+	footerText := "[Enter] View feedback  [r] Resubmit  [q] Quit"
+	if m.showingExplanation {
+		footerText = "[j/k] Scroll  [Enter] Hide  [r] Resubmit  [q] Quit"
 	}
 	footer := lipgloss.NewStyle().
-		Width(m.width).
-		Foreground(styles.White).
-		Background(styles.DarkGray).
-		Padding(0, 1).
+		Foreground(styles.Gray).
+		Italic(true).
 		Render(footerText)
 
-	// Combine everything with proper spacing
+	// Combine everything
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
 		listView,
+		"",
 		separator,
+		"",
 		feedbackContent,
+		"",
 		footer,
 	)
 
-	return screenStyle.
-		Width(m.width).
-		Height(m.height).
-		Padding(1).
-		Render(content)
+	return content
 }
 
 func RunGradingReport(tasks []types.Task, lessonToken string) (bool, error) {
@@ -305,12 +292,12 @@ func RunGradingReport(tasks []types.Task, lessonToken string) (bool, error) {
 	const defaultWidth = 20
 
 	l := list.New(items, itemDelegate{}, defaultWidth, 14)
-	l.Title = "🚀 Sprint Grading Report"
+	l.Title = "🚀 Grading Report"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
+	l.SetShowHelp(false)
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
 
 	m := model{
 		list:        l,
