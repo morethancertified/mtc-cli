@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/morethancertified/mtc-cli/internal/mtcapi"
-	"github.com/morethancertified/mtc-cli/internal/types"
+	"github.com/morethancertified/sprintctl/internal/mtcapi"
+	"github.com/morethancertified/sprintctl/internal/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -18,7 +18,7 @@ var initCmd = &cobra.Command{
 	Use:     "init <lesson-token>",
 	Short:   "Initialize a lab environment",
 	Args:    cobra.ExactArgs(1),
-	Example: "mtc init cm4ppz694200blze51ts1234",
+	Example: "sprintctl init cm4ppz694200blze51ts1234",
 	Run: func(cmd *cobra.Command, args []string) {
 		lessonToken := args[0]
 		publicOnly, _ := cmd.Flags().GetBool("public-only")

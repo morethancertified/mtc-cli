@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/morethancertified/mtc-cli/internal/auth"
-	"github.com/morethancertified/mtc-cli/internal/styles"
+	"github.com/morethancertified/sprintctl/internal/auth"
+	"github.com/morethancertified/sprintctl/internal/styles"
 	"github.com/spf13/cobra"
 )
 

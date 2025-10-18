@@ -1,4 +1,4 @@
-module github.com/morethancertified/mtc-cli
+module github.com/morethancertified/sprintctl
 
 go 1.23.0
 

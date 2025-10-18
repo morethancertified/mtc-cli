@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/morethancertified/mtc-cli/internal/styles"
+	"github.com/morethancertified/sprintctl/internal/styles"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,7 +15,7 @@ var cfgFile string
 var Version = "v0.0.0"
 
 var rootCmd = &cobra.Command{
-	Use:     "mtc-cli",
+	Use:     "sprintctl",
 	Short:   "The MoreThanCertified CLI",
 	Long: fmt.Sprintf(`%s
 
@@ -32,7 +32,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.config/mtc/mtc.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.config/sprintctl/config.json)")
 	rootCmd.PersistentFlags().StringP("api-base-url", "l", viper.GetString("api_base_url"), "API base URL")
 	viper.BindPFlag("api_base_url", rootCmd.PersistentFlags().Lookup("api-base-url"))
 }
@@ -46,7 +46,7 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		configDir := filepath.Join(home, ".config", "mtc")
+		configDir := filepath.Join(home, ".config", "sprintctl")
 		err = os.MkdirAll(configDir, os.ModePerm)
 		cobra.CheckErr(err)
 
@@ -54,7 +54,7 @@ func initConfig() {
 		viper.SetConfigType("json")
 		viper.AddConfigPath(configDir)
 		viper.AutomaticEnv()
-		viper.SetEnvPrefix("MTC")
+		viper.SetEnvPrefix("SPRINTCTL")
 
 		if err := viper.ReadInConfig(); err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); ok {

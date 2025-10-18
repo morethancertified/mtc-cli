@@ -10,11 +10,11 @@ import (
 
 	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/erikgeiser/promptkit/selection"
-	"github.com/morethancertified/mtc-cli/internal/mtcapi"
-	"github.com/morethancertified/mtc-cli/internal/styles"
-	"github.com/morethancertified/mtc-cli/internal/tui"
-	"github.com/morethancertified/mtc-cli/internal/types"
-	"github.com/morethancertified/mtc-cli/internal/widgets"
+	"github.com/morethancertified/sprintctl/internal/mtcapi"
+	"github.com/morethancertified/sprintctl/internal/styles"
+	"github.com/morethancertified/sprintctl/internal/tui"
+	"github.com/morethancertified/sprintctl/internal/types"
+	"github.com/morethancertified/sprintctl/internal/widgets"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,7 +23,7 @@ var submitCmd = &cobra.Command{
 	Use:     "submit <lesson-token>",
 	Short:   "Submit a lesson for grading",
 	Args:    cobra.ExactArgs(1),
-	Example: "mtc submit cm4ppz694200blze51ts1234",
+	Example: "sprintctl submit cm4ppz694200blze51ts1234",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Check for a local project config file and create one if it doesn't exist.
 		wd, err := os.Getwd()

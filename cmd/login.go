@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/erikgeiser/promptkit/textinput"
-	"github.com/morethancertified/mtc-cli/internal/auth"
-	"github.com/morethancertified/mtc-cli/internal/styles"
+	"github.com/morethancertified/sprintctl/internal/auth"
+	"github.com/morethancertified/sprintctl/internal/styles"
 	"github.com/spf13/cobra"
 )
 

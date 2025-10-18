@@ -1,4 +1,4 @@
-# MTC CLI
+# SprintCTL
 
 A command-line interface tool for validating MoreThanCertified lesson tasks locally.
 
@@ -9,7 +9,7 @@ A command-line interface tool for validating MoreThanCertified lesson tasks loca
 
 ## Installation
 
-Currently, the mtc-cli is only supported on macOS and Linux (including linux via Windows Subsystem for Linux).
+Currently, sprintctl is only supported on macOS and Linux (including linux via Windows Subsystem for Linux).
 
 ### With installer script
 
@@ -20,7 +20,7 @@ curl -s https://app.morethancertified.com/install.sh | sh
 ### With Go
 
 ```bash
-go install github.com/morethancertified/mtc-cli
+go install github.com/morethancertified/sprintctl
 ```
 
 ## Usage
@@ -28,19 +28,19 @@ go install github.com/morethancertified/mtc-cli
 Submit a lesson for validation:
 
 ```bash
-mtc submit <lesson-token>
+sprintctl submit <lesson-token>
 ```
 
 To reset your progress for a lesson:
 
 ```bash
-mtc submit <lesson-token> -r
+sprintctl submit <lesson-token> -r
 ```
 
 Example:
 
 ```bash
-mtc submit cm4ppz694200blze51ts1234
+sprintctl submit cm4ppz694200blze51ts1234
 ```
 
 ## Development
@@ -54,7 +54,7 @@ This project uses [just](https://github.com/casey/just) to manage commands. Plea
 Reference to justfile commands:
 
 - `just run` - Run the application from source
-- `just build` - Build the binary to bin/mtc-cli
+- `just build` - Build the binary to bin/sprintctl
 - `just test` - Run tests
 - `just fmt` - Format code
 - `just clean` - Clean build artifacts
@@ -65,7 +65,7 @@ Reference to justfile commands:
 
 The CLI uses Viper for configuration management. By default, it creates a config file at:
 
-- `$HOME/.config/mtc/config.json`
+- `$HOME/.config/sprintctl/config.json`
 
 You can override the config location using the `--config` flag.
 
@@ -88,11 +88,11 @@ MIT License - See LICENSE file for details.
 
 ## Contributing
 
-1. Clone the repository (`git clone https://github.com/morethancertified/mtc-cli`)
+1. Clone the repository (`git clone https://github.com/morethancertified/sprintctl`)
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
-5. [Open a Pull Request](https://github.com/morethancertified/mtc-cli/compare)
+5. [Open a Pull Request](https://github.com/morethancertified/sprintctl/compare)
 
 ## Dependencies
 

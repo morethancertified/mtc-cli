@@ -11,8 +11,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
-	"github.com/morethancertified/mtc-cli/internal/styles"
-	"github.com/morethancertified/mtc-cli/internal/types"
+	"github.com/morethancertified/sprintctl/internal/styles"
+	"github.com/morethancertified/sprintctl/internal/types"
 )
 
 // Note: dynamic sizing is handled via WindowSizeMsg; no fixed widths

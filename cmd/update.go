@@ -12,7 +12,7 @@ import (
 )
 
 func update(version string) error {
-	latest, found, err := selfupdate.DetectLatest(context.Background(), selfupdate.ParseSlug("morethancertified/mtc-cli"))
+	latest, found, err := selfupdate.DetectLatest(context.Background(), selfupdate.ParseSlug("morethancertified/sprintctl"))
 	if err != nil {
 		return fmt.Errorf("error occurred while detecting version: %w", err)
 	}
@@ -38,7 +38,7 @@ func update(version string) error {
 
 var updateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "Update the mtc-cli to the latest version",
+	Short: "Update sprintctl to the latest version",
 	Run: func(cmd *cobra.Command, args []string) {
 		update(Version)
 	},

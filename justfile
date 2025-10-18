@@ -2,7 +2,7 @@ default:
   @just --list
 
 build:
-  go build -o bin/mtc-cli main.go
+  go build -o bin/sprintctl main.go
 
 test:
   go test -v ./...
@@ -20,9 +20,9 @@ run:
   go run main.go
 
 install:
-  go install 'github.com/morethancertified/mtc-cli'
-  echo "mtc installed"
+  go install 'github.com/morethancertified/sprintctl'
+  echo "sprintctl installed"
 
 uninstall:
-  rm -f $(go env GOPATH)/bin/mtc-cli
-  echo "mtc uninstalled"
+  rm -f $(go env GOPATH)/bin/sprintctl
+  echo "sprintctl uninstalled"

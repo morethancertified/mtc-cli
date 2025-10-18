@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/morethancertified/mtc-cli/internal/mtcapi"
-	"github.com/morethancertified/mtc-cli/internal/styles"
-	"github.com/morethancertified/mtc-cli/internal/tui"
-	"github.com/morethancertified/mtc-cli/internal/types"
+	"github.com/morethancertified/sprintctl/internal/mtcapi"
+	"github.com/morethancertified/sprintctl/internal/styles"
+	"github.com/morethancertified/sprintctl/internal/tui"
+	"github.com/morethancertified/sprintctl/internal/types"
 	"github.com/spf13/cobra"
 )
 
