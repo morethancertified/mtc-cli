@@ -254,14 +254,18 @@ func runSubmissionFlow(lessonToken string, apiClient *mtcapi.MtcApiClient) {
 	fmt.Println()
 	// Launch TUI for interactive grading report
 	shouldResubmit, err := tui.RunGradingReport(lesson.Tasks, lessonToken)
+	
+	// Clear screen after TUI exits (whether quitting or resubmitting)
+	fmt.Print("\033[H\033[2J")
+	
 	if err != nil {
 		// Fallback to table view if TUI fails
 		fmt.Println(styles.WarningStyle.Render(" TUI ERROR "))
+		fmt.Printf("Error: %v\n\n", err)
 		printTasksTable(lesson.Tasks)
 		fmt.Println()
 	} else if shouldResubmit {
-		// User wants to resubmit - clear screen and run submission flow again
-		fmt.Print("\033[H\033[2J") // Clear screen
+		// User wants to resubmit - run submission flow again
 		fmt.Println(styles.InfoStyle.Render(" RESUBMITTING LESSON "))
 		fmt.Println()
 		runSubmissionFlow(lessonToken, apiClient)
