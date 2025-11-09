@@ -96,6 +96,26 @@ func (c *MtcApiClient) ResetLesson(lessonToken string) (types.Lesson, error) {
 	return *res.Result().(*types.Lesson), nil
 }
 
+func (c *MtcApiClient) GetActiveLesson() (types.ActiveLesson, error) {
+	req := c.httpClient.R().
+		SetResult(&types.ActiveLesson{})
+	
+	if err := c.ensureAuthenticated(req); err != nil {
+		return types.ActiveLesson{}, err
+	}
+	
+	res, err := req.Get("/grading/active-lab")
+	if err != nil {
+		return types.ActiveLesson{}, err
+	}
+
+	if res.IsError() {
+		return types.ActiveLesson{}, fmt.Errorf("%s", res.String())
+	}
+
+	return *res.Result().(*types.ActiveLesson), nil
+}
+
 func ValidCUID(cuid string) bool {
 	return len(cuid) >= 7 && strings.HasPrefix(cuid, "c")
 }

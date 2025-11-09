@@ -20,10 +20,10 @@ import (
 )
 
 var submitCmd = &cobra.Command{
-	Use:     "submit <lesson-token>",
+	Use:     "submit [lesson-token]",
 	Short:   "Submit a lesson for grading",
-	Args:    cobra.ExactArgs(1),
-	Example: "sprintctl submit cm4ppz694200blze51ts1234",
+	Args:    cobra.MaximumNArgs(1),
+	Example: "sprintctl submit\nsprintctl submit cm4ppz694200blze51ts1234",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Check for a local project config file and create one if it doesn't exist.
 		wd, err := os.Getwd()
@@ -71,9 +71,31 @@ var submitCmd = &cobra.Command{
 			fmt.Println(styles.Separator(60))
 		}
 
-		lessonToken := args[0]
-		reset, _ := cmd.Flags().GetBool("reset")
+		// Determine lesson token
+		var lessonToken string
 		apiClient := mtcapi.New(viper.GetString("api_base_url"))
+
+		if len(args) == 0 {
+			// No token provided - auto-detect active lab
+			fmt.Println("No lesson token provided. Fetching most recently accessed lab...")
+			activeLesson, err := apiClient.GetActiveLesson()
+			if err != nil {
+				fmt.Println("Error fetching active lab:", err)
+				fmt.Println("\nPlease open a lab in the UI first, or provide a lesson token explicitly:")
+				fmt.Println("  mtc submit <lesson-token>")
+				return
+			}
+			lessonToken = activeLesson.LessonToken
+			fmt.Printf("\n📚 Auto-detected lab: %s\n", activeLesson.Title)
+			if activeLesson.CourseTitle != "" {
+				fmt.Printf("   Course: %s\n", activeLesson.CourseTitle)
+			}
+			fmt.Println()
+		} else {
+			lessonToken = args[0]
+		}
+
+		reset, _ := cmd.Flags().GetBool("reset")
 		lesson, err := apiClient.GetLesson(lessonToken)
 		if err != nil {
 			fmt.Println("Error getting lesson:", err)

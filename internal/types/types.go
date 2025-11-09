@@ -38,3 +38,12 @@ type SubmitLessonRequest struct {
 	Type              SubmitLessonRequestType `json:"type"`
 	CliCommandResults []CLICommandResult      `json:"cli_command_results"`
 }
+
+type ActiveLesson struct {
+	LessonID       string `json:"lessonId"`
+	UserLessonID   string `json:"userLessonId"`
+	LessonToken    string `json:"lessonToken"`
+	Title          string `json:"title"`
+	CourseTitle    string `json:"courseTitle"`
+	LastAccessedAt string `json:"lastAccessedAt"`
+}
