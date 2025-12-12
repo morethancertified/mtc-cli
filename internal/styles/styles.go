@@ -41,11 +41,21 @@ var (
 		Bold(true).
 		Align(lipgloss.Center)
 
+	// Compact logo style for CLI help
+	LogoStyle = lipgloss.NewStyle().
+		Foreground(Cyan).
+		Bold(true)
+
 	// Subtitle style
 	SubtitleStyle = lipgloss.NewStyle().
 		Foreground(Gray).
 		Italic(true).
-		Margin(0, 0, 1, 0)
+		Margin(0, 0, 0, 0)
+
+	// Hint style for actionable tips
+	HintStyle = lipgloss.NewStyle().
+		Foreground(PrimaryGreen).
+		Italic(true)
 
 	// Section header style
 	SectionHeaderStyle = lipgloss.NewStyle().

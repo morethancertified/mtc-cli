@@ -16,15 +16,14 @@ var Version = "v0.0.0"
 
 var rootCmd = &cobra.Command{
 	Use:     "sprintctl",
-	Short:   "The MoreThanCertified CLI",
+	Short:   "CloudSprints CLI for lab grading",
 	Long: fmt.Sprintf(`%s
-
 %s
 
 %s`,
-		styles.CreateBanner("🚀 SPRINTCTL 🚀"),
-		styles.SubtitleStyle.Render("The MoreThanCertified CLI for interactive lesson validation"),
-		styles.BoxStyle.Render("This program validates your MoreThanCertified lesson tasks interactively on your local machine.\n\nFeatures:\n• Interactive grading reports\n• AI-powered feedback\n• Sprint-based learning workflow\n• Real-time task validation")),
+		styles.LogoStyle.Render("⚡ sprintctl"),
+		styles.SubtitleStyle.Render("CloudSprints CLI"),
+		styles.HintStyle.Render("Run 'sprintctl grade' to submit your lab for grading")),
 	Version: Version,
 }
 
