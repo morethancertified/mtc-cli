@@ -9,8 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/wordwrap"
 	"github.com/morethancertified/sprintctl/internal/styles"
 	"github.com/morethancertified/sprintctl/internal/types"
 )
@@ -243,14 +243,27 @@ func (m *model) updateDetail() {
 	
 	if m.showingExplanation {
 		if task.AiExplanation != "" {
-			content = lipgloss.NewStyle().Bold(true).Render("🤖 AI Feedback:") + "\n\n"
-			// Wrap text based on current viewport width
-			wrapWidth := m.viewport.Width
-			if wrapWidth <= 0 {
-				wrapWidth = 80
+			// Render markdown with glamour for proper code highlighting
+			renderWidth := m.viewport.Width
+			if renderWidth <= 0 {
+				renderWidth = 80
 			}
-			wrappedText := wordwrap.String(task.AiExplanation, wrapWidth-2)
-			content += wrappedText
+			renderer, err := glamour.NewTermRenderer(
+				glamour.WithAutoStyle(),
+				glamour.WithWordWrap(renderWidth-4),
+			)
+			if err == nil {
+				renderedContent, err := renderer.Render(task.AiExplanation)
+				if err == nil {
+					content = lipgloss.NewStyle().Bold(true).Render("🤖 AI Feedback:") + "\n" + renderedContent
+				} else {
+					// Fallback to plain text if rendering fails
+					content = lipgloss.NewStyle().Bold(true).Render("🤖 AI Feedback:") + "\n\n" + task.AiExplanation
+				}
+			} else {
+				// Fallback to plain text if renderer creation fails
+				content = lipgloss.NewStyle().Bold(true).Render("🤖 AI Feedback:") + "\n\n" + task.AiExplanation
+			}
 		} else {
 			content = lipgloss.NewStyle().Foreground(styles.Gray).Render("No AI feedback available for this task.")
 		}
