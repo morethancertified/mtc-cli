@@ -157,26 +157,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// Handle viewport scrolling FIRST when showing explanation
+		// This prevents j/k from being captured by the list
+		if m.showingExplanation {
+			switch msg.String() {
+			case "j", "down":
+				m.viewport.LineDown(1)
+				return m, nil
+			case "k", "up":
+				m.viewport.LineUp(1)
+				return m, nil
+			case "pgdown", "ctrl+d":
+				m.viewport.HalfViewDown()
+				return m, nil
+			case "pgup", "ctrl+u":
+				m.viewport.HalfViewUp()
+				return m, nil
+			case "g":
+				m.viewport.GotoTop()
+				return m, nil
+			case "G":
+				m.viewport.GotoBottom()
+				return m, nil
+			}
+		}
+
 		switch {
 		case key.Matches(msg, list.DefaultKeyMap().Quit):
 			m.quitting = true
 			return m, tea.Quit
-
-		case key.Matches(msg, list.DefaultKeyMap().CursorUp):
-			m.list, _ = m.list.Update(msg)
-			m.showingExplanation = false // Reset explanation view when navigating
-			m.viewport.SetContent("") // Clear viewport content completely
-			m.viewport.GotoTop() // Reset scroll position
-			m.updateDetail()
-			return m, nil
-
-		case key.Matches(msg, list.DefaultKeyMap().CursorDown):
-			m.list, _ = m.list.Update(msg)
-			m.showingExplanation = false // Reset explanation view when navigating
-			m.viewport.SetContent("") // Clear viewport content completely
-			m.viewport.GotoTop() // Reset scroll position
-			m.updateDetail()
-			return m, nil
 
 		case msg.String() == "enter":
 			// Toggle AI explanation display
@@ -189,25 +198,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.resubmitting = true
 			return m, tea.Quit
 
-		// Handle viewport scrolling for long AI explanations
-		case msg.String() == "j":
-			if m.showingExplanation {
-				m.viewport.LineDown(1)
+		// List navigation only when NOT showing explanation
+		case key.Matches(msg, list.DefaultKeyMap().CursorUp), msg.String() == "k":
+			if !m.showingExplanation {
+				m.list, _ = m.list.Update(msg)
+				m.viewport.SetContent("")
+				m.viewport.GotoTop()
+				m.updateDetail()
 				return m, nil
 			}
-		case msg.String() == "k":
-			if m.showingExplanation {
-				m.viewport.LineUp(1)
-				return m, nil
-			}
-		case msg.String() == "pgdown", msg.String() == "ctrl+d":
-			if m.showingExplanation {
-				m.viewport.HalfViewDown()
-				return m, nil
-			}
-		case msg.String() == "pgup", msg.String() == "ctrl+u":
-			if m.showingExplanation {
-				m.viewport.HalfViewUp()
+
+		case key.Matches(msg, list.DefaultKeyMap().CursorDown), msg.String() == "j":
+			if !m.showingExplanation {
+				m.list, _ = m.list.Update(msg)
+				m.viewport.SetContent("")
+				m.viewport.GotoTop()
+				m.updateDetail()
 				return m, nil
 			}
 		}
