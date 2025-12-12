@@ -106,18 +106,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		
 		// Reserve space for title, separator and footer
-		reservedHeight := 5 // title + separator + footer + padding
+		reservedHeight := 6 // title + separator + footer + padding lines
 		availableHeight := m.height - reservedHeight
 		if availableHeight < 6 {
 			availableHeight = 6
 		}
 		
-		// Give more space to task list (60/40 split)
-		m.topHeight = (availableHeight * 6) / 10
-		m.bottomHeight = availableHeight - m.topHeight
+		// Dynamically size task list based on number of tasks
+		// Each task takes 1 line, plus 2 lines for title/header
+		taskCount := len(m.tasks)
+		neededTaskHeight := taskCount + 2 // tasks + title line + padding
+		
+		// Cap task list height to leave at least 5 lines for viewport
+		minViewportHeight := 5
+		maxTaskHeight := availableHeight - minViewportHeight
+		if maxTaskHeight < 3 {
+			maxTaskHeight = 3
+		}
+		
+		// Use the smaller of needed height or max allowed
+		m.topHeight = neededTaskHeight
+		if m.topHeight > maxTaskHeight {
+			m.topHeight = maxTaskHeight
+		}
 		if m.topHeight < 3 {
 			m.topHeight = 3
 		}
+		
+		// Give all remaining space to viewport for AI explanation
+		m.bottomHeight = availableHeight - m.topHeight
 		if m.bottomHeight < 3 {
 			m.bottomHeight = 3
 		}
@@ -173,14 +190,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		// Handle viewport scrolling for long AI explanations
-		case msg.String() == "j" || msg.String() == "down":
+		case msg.String() == "j":
 			if m.showingExplanation {
 				m.viewport.LineDown(1)
 				return m, nil
 			}
-		case msg.String() == "k" || msg.String() == "up":
+		case msg.String() == "k":
 			if m.showingExplanation {
 				m.viewport.LineUp(1)
+				return m, nil
+			}
+		case msg.String() == "pgdown", msg.String() == "ctrl+d":
+			if m.showingExplanation {
+				m.viewport.HalfViewDown()
+				return m, nil
+			}
+		case msg.String() == "pgup", msg.String() == "ctrl+u":
+			if m.showingExplanation {
+				m.viewport.HalfViewUp()
 				return m, nil
 			}
 		}
@@ -261,7 +288,7 @@ func (m model) View() string {
 	// Footer with instructions
 	footerText := "[Enter] View feedback  [r] Resubmit  [q] Quit"
 	if m.showingExplanation {
-		footerText = "[j/k] Scroll  [Enter] Hide  [r] Resubmit  [q] Quit"
+		footerText = "[j/k] Scroll  [PgUp/PgDn] Page  [Enter] Hide  [r] Resubmit  [q] Quit"
 	}
 	footer := lipgloss.NewStyle().
 		Foreground(styles.Gray).
