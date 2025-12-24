@@ -1,6 +1,7 @@
 package mtcapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -30,7 +31,7 @@ func (c *MtcApiClient) ensureAuthenticated(req *resty.Request) error {
 	if err != nil {
 		return fmt.Errorf("authentication required: please run 'sprintctl login' first")
 	}
-	
+
 	req.SetAuthToken(token)
 	return nil
 }
@@ -38,11 +39,11 @@ func (c *MtcApiClient) ensureAuthenticated(req *resty.Request) error {
 func (c *MtcApiClient) GetLesson(lessonToken string) (types.Lesson, error) {
 	req := c.httpClient.R().
 		SetResult(&types.Lesson{})
-	
+
 	if err := c.ensureAuthenticated(req); err != nil {
 		return types.Lesson{}, err
 	}
-	
+
 	res, err := req.Get("/lessons/" + lessonToken)
 	if err != nil {
 		return types.Lesson{}, err
@@ -64,11 +65,11 @@ func (c *MtcApiClient) SubmitLesson(lessonToken string, cliCommandResults []type
 			CliCommandResults: cliCommandResults,
 		}).
 		SetResult(&types.Lesson{})
-	
+
 	if err := c.ensureAuthenticated(req); err != nil {
 		return types.Lesson{}, err
 	}
-	
+
 	res, err := req.Post("/lessons/" + lessonToken + "/submit")
 	if err != nil {
 		return types.Lesson{}, err
@@ -84,11 +85,11 @@ func (c *MtcApiClient) SubmitLesson(lessonToken string, cliCommandResults []type
 func (c *MtcApiClient) ResetLesson(lessonToken string) (types.Lesson, error) {
 	req := c.httpClient.R().
 		SetResult(&types.Lesson{})
-	
+
 	if err := c.ensureAuthenticated(req); err != nil {
 		return types.Lesson{}, err
 	}
-	
+
 	res, err := req.Post("/lessons/" + lessonToken + "/reset")
 	if err != nil {
 		return types.Lesson{}, err
@@ -99,11 +100,11 @@ func (c *MtcApiClient) ResetLesson(lessonToken string) (types.Lesson, error) {
 func (c *MtcApiClient) GetActiveLesson() (types.ActiveLesson, error) {
 	req := c.httpClient.R().
 		SetResult(&types.ActiveLesson{})
-	
+
 	if err := c.ensureAuthenticated(req); err != nil {
 		return types.ActiveLesson{}, err
 	}
-	
+
 	res, err := req.Get("/grading/active-lab")
 	if err != nil {
 		return types.ActiveLesson{}, err
@@ -118,4 +119,100 @@ func (c *MtcApiClient) GetActiveLesson() (types.ActiveLesson, error) {
 
 func ValidCUID(cuid string) bool {
 	return len(cuid) >= 7 && strings.HasPrefix(cuid, "c")
+}
+
+// Admin API methods - use lesson_id directly (not user_lesson_id)
+
+// GetAdminLessonInfo fetches lesson info via admin endpoint
+func (c *MtcApiClient) GetAdminLessonInfo(lessonID string) (types.AdminLessonInfo, error) {
+	req := c.httpClient.R().
+		SetResult(&types.AdminLessonInfo{})
+
+	if err := c.ensureAuthenticated(req); err != nil {
+		return types.AdminLessonInfo{}, err
+	}
+
+	res, err := req.Get("/admin/labs/" + lessonID)
+	if err != nil {
+		return types.AdminLessonInfo{}, err
+	}
+
+	if res.IsError() {
+		return types.AdminLessonInfo{}, fmt.Errorf("API error: %s", res.String())
+	}
+
+	return *res.Result().(*types.AdminLessonInfo), nil
+}
+
+// GetAdminLabFiles fetches all lab files including solutions via admin endpoint
+func (c *MtcApiClient) GetAdminLabFiles(lessonID string) ([]types.LabFile, error) {
+	req := c.httpClient.R()
+
+	if err := c.ensureAuthenticated(req); err != nil {
+		return nil, err
+	}
+
+	res, err := req.Get("/admin/labs/" + lessonID + "/files")
+	if err != nil {
+		return nil, err
+	}
+
+	if res.IsError() {
+		return nil, fmt.Errorf("API error: %s", res.String())
+	}
+
+	// Parse response - expect { files: [...] }
+	var response struct {
+		Files []types.LabFile `json:"files"`
+	}
+	if err := json.Unmarshal(res.Body(), &response); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %v", err)
+	}
+
+	return response.Files, nil
+}
+
+// GetAdminProjectLabs fetches all labs for a project via admin endpoint
+func (c *MtcApiClient) GetAdminProjectLabs(projectID string) (types.AdminProjectLabs, error) {
+	req := c.httpClient.R().
+		SetResult(&types.AdminProjectLabs{})
+
+	if err := c.ensureAuthenticated(req); err != nil {
+		return types.AdminProjectLabs{}, err
+	}
+
+	res, err := req.Get("/admin/projects/" + projectID + "/labs")
+	if err != nil {
+		return types.AdminProjectLabs{}, err
+	}
+
+	if res.IsError() {
+		return types.AdminProjectLabs{}, fmt.Errorf("API error: %s", res.String())
+	}
+
+	return *res.Result().(*types.AdminProjectLabs), nil
+}
+
+// AdminGradeLesson grades a lesson via admin endpoint (no user enrollment required)
+func (c *MtcApiClient) AdminGradeLesson(lessonID string, cliCommandResults []types.CLICommandResult) (types.AdminGradeResult, error) {
+	req := c.httpClient.R().
+		SetBody(map[string]interface{}{
+			"cliOutput": cliCommandResults,
+		}).
+		SetResult(&types.AdminGradeResult{})
+
+	if err := c.ensureAuthenticated(req); err != nil {
+		return types.AdminGradeResult{}, err
+	}
+
+	res, err := req.Post("/admin/labs/" + lessonID + "/grade")
+	if err != nil {
+		return types.AdminGradeResult{}, err
+	}
+
+	if res.IsError() {
+		return types.AdminGradeResult{}, fmt.Errorf("API error: %s", res.String())
+	}
+
+	return *res.Result().(*types.AdminGradeResult), nil
 }

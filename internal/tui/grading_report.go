@@ -5,7 +5,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,29 +18,25 @@ import (
 
 var (
 	titleStyle = lipgloss.NewStyle().
-		Foreground(styles.PrimaryBlue).
-		Bold(true).
-		PaddingLeft(1)
+			Foreground(styles.PrimaryBlue).
+			Bold(true).
+			PaddingLeft(1)
 
 	itemStyle = lipgloss.NewStyle().
-		PaddingLeft(2)
+			PaddingLeft(2)
 
 	selectedItemStyle = lipgloss.NewStyle().
-		Foreground(styles.PrimaryBlue).
-		Bold(true)
+				Foreground(styles.PrimaryBlue).
+				Bold(true)
 
 	paginationStyle = list.DefaultStyles().PaginationStyle.
-		PaddingLeft(2).
-		Foreground(styles.Gray)
-
-	helpStyle = list.DefaultStyles().HelpStyle.
-		PaddingLeft(2).
-		Foreground(styles.Gray)
+			PaddingLeft(2).
+			Foreground(styles.Gray)
 
 	quitTextStyle = lipgloss.NewStyle().
-		Margin(1, 0, 1, 2).
-		Foreground(styles.PrimaryGreen).
-		Bold(true)
+			Margin(1, 0, 1, 2).
+			Foreground(styles.PrimaryGreen).
+			Bold(true)
 )
 
 type item struct {
@@ -73,18 +68,17 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 }
 
 type model struct {
-	list              list.Model
-	viewport          viewport.Model
-	choice            string
-	quitting          bool
-	tasks             []types.Task
+	list               list.Model
+	viewport           viewport.Model
+	quitting           bool
+	tasks              []types.Task
 	showingExplanation bool
-	lessonToken       string
-	resubmitting      bool
-	width             int
-	height            int
-	topHeight         int
-	bottomHeight      int
+	lessonToken        string
+	resubmitting       bool
+	width              int
+	height             int
+	topHeight          int
+	bottomHeight       int
 }
 
 func (m model) Init() tea.Cmd {
@@ -96,7 +90,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		
+
 		// Ensure minimum dimensions
 		if m.width < 10 {
 			m.width = 10
@@ -104,26 +98,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.height < 10 {
 			m.height = 10
 		}
-		
+
 		// Reserve space for title, separator and footer
 		reservedHeight := 6 // title + separator + footer + padding lines
 		availableHeight := m.height - reservedHeight
 		if availableHeight < 6 {
 			availableHeight = 6
 		}
-		
+
 		// Dynamically size task list based on number of tasks
-		// Each task takes 1 line, plus 2 lines for title/header
+		// Each task takes 1 line, plus 3 lines for title/header/padding
+		// The list component reserves ~2 lines for title internally
 		taskCount := len(m.tasks)
-		neededTaskHeight := taskCount + 2 // tasks + title line + padding
-		
+		neededTaskHeight := taskCount + 3 // tasks + title + header padding
+
 		// Cap task list height to leave at least 5 lines for viewport
 		minViewportHeight := 5
 		maxTaskHeight := availableHeight - minViewportHeight
 		if maxTaskHeight < 3 {
 			maxTaskHeight = 3
 		}
-		
+
 		// Use the smaller of needed height or max allowed
 		m.topHeight = neededTaskHeight
 		if m.topHeight > maxTaskHeight {
@@ -132,7 +127,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.topHeight < 3 {
 			m.topHeight = 3
 		}
-		
+
 		// Give all remaining space to viewport for AI explanation
 		m.bottomHeight = availableHeight - m.topHeight
 		if m.bottomHeight < 3 {
@@ -157,72 +152,61 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		// Handle viewport scrolling FIRST when showing explanation
-		// This prevents j/k from being captured by the list
-		if m.showingExplanation {
-			switch msg.String() {
-			case "j", "down":
-				m.viewport.LineDown(1)
-				return m, nil
-			case "k", "up":
-				m.viewport.LineUp(1)
-				return m, nil
-			case "pgdown", "ctrl+d":
-				m.viewport.HalfViewDown()
-				return m, nil
-			case "pgup", "ctrl+u":
-				m.viewport.HalfViewUp()
-				return m, nil
-			case "g":
-				m.viewport.GotoTop()
-				return m, nil
-			case "G":
-				m.viewport.GotoBottom()
-				return m, nil
-			}
-		}
-
-		switch {
-		case key.Matches(msg, list.DefaultKeyMap().Quit):
+		switch msg.String() {
+		case "q", "esc", "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
 
-		case msg.String() == "enter":
+		case "enter":
 			// Toggle AI explanation display
 			m.showingExplanation = !m.showingExplanation
 			m.updateDetail()
 			return m, nil
 
-		case msg.String() == "r":
+		case "r":
 			// Resubmit lesson
 			m.resubmitting = true
 			return m, tea.Quit
 
-		// List navigation only when NOT showing explanation
-		case key.Matches(msg, list.DefaultKeyMap().CursorUp), msg.String() == "k":
-			if !m.showingExplanation {
-				m.list, _ = m.list.Update(msg)
-				m.viewport.SetContent("")
-				m.viewport.GotoTop()
-				m.updateDetail()
-				return m, nil
-			}
+		case "j", "down":
+			// Always navigate task list - AI feedback updates automatically
+			m.list.CursorDown()
+			m.updateDetail()
+			return m, nil
 
-		case key.Matches(msg, list.DefaultKeyMap().CursorDown), msg.String() == "j":
-			if !m.showingExplanation {
-				m.list, _ = m.list.Update(msg)
-				m.viewport.SetContent("")
-				m.viewport.GotoTop()
-				m.updateDetail()
-				return m, nil
+		case "k", "up":
+			// Always navigate task list - AI feedback updates automatically
+			m.list.CursorUp()
+			m.updateDetail()
+			return m, nil
+
+		case "pgdown", "ctrl+d":
+			if m.showingExplanation {
+				m.viewport.HalfViewDown()
 			}
+			return m, nil
+
+		case "pgup", "ctrl+u":
+			if m.showingExplanation {
+				m.viewport.HalfViewUp()
+			}
+			return m, nil
+
+		case "g":
+			if m.showingExplanation {
+				m.viewport.GotoTop()
+			}
+			return m, nil
+
+		case "G":
+			if m.showingExplanation {
+				m.viewport.GotoBottom()
+			}
+			return m, nil
 		}
 	}
 
-	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
-	m.updateDetail()
-	return m, cmd
+	return m, nil
 }
 
 func (m *model) updateDetail() {
@@ -240,13 +224,13 @@ func (m *model) updateDetail() {
 	}
 
 	task := selectedItem.(item).task
-	
+
 	// Always clear viewport first and reset scroll position to prevent content remnants
 	m.viewport.SetContent("")
 	m.viewport.GotoTop()
-	
+
 	var content string
-	
+
 	if m.showingExplanation {
 		if task.AiExplanation != "" {
 			// Render markdown with glamour for proper code highlighting
@@ -291,10 +275,10 @@ func (m model) View() string {
 
 	// Top: tasks list
 	listView := m.list.View()
-	
+
 	// Bottom: AI feedback
 	feedbackContent := m.viewport.View()
-	
+
 	// Simple separator line
 	separatorWidth := m.width - 2
 	if separatorWidth < 1 {
@@ -305,9 +289,9 @@ func (m model) View() string {
 		Render(strings.Repeat("─", separatorWidth))
 
 	// Footer with instructions
-	footerText := "[Enter] View feedback  [r] Resubmit  [q] Quit"
+	footerText := "[j/k] Navigate  [Enter] Toggle feedback  [r] Resubmit  [q] Quit"
 	if m.showingExplanation {
-		footerText = "[j/k] Scroll  [PgUp/PgDn] Page  [Enter] Hide  [r] Resubmit  [q] Quit"
+		footerText = "[j/k] Navigate  [PgUp/PgDn] Scroll feedback  [Enter] Hide  [r] Resubmit  [q] Quit"
 	}
 	footer := lipgloss.NewStyle().
 		Foreground(styles.Gray).
@@ -335,13 +319,17 @@ func RunGradingReport(tasks []types.Task, lessonToken string) (bool, error) {
 		items[i] = item{task: task}
 	}
 
-	const defaultWidth = 20
+	const defaultWidth = 80
+	// Initial height should accommodate all tasks plus title overhead
+	// The list reserves ~2 lines for title, so we need tasks + 2
+	initialHeight := len(items) + 4
 
-	l := list.New(items, itemDelegate{}, defaultWidth, 14)
+	l := list.New(items, itemDelegate{}, defaultWidth, initialHeight)
 	l.Title = "🚀 Grading Report"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.SetShowHelp(false)
+	l.SetShowPagination(false) // Disable pagination dots since we want to show all tasks
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
 

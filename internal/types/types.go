@@ -47,3 +47,48 @@ type ActiveLesson struct {
 	CourseTitle    string `json:"courseTitle"`
 	LastAccessedAt string `json:"lastAccessedAt"`
 }
+
+// Admin types - for direct lesson access without user enrollment
+
+type AdminLessonInfo struct {
+	ID          string   `json:"id"`
+	Title       string   `json:"title"`
+	CliCommands []string `json:"cliCommands"`
+	Tasks       []Task   `json:"tasks"`
+}
+
+type AdminGradeResult struct {
+	Success     bool              `json:"success"`
+	LessonID    string            `json:"lesson_id"`
+	LessonTitle string            `json:"lesson_title"`
+	Results     []AdminTaskResult `json:"results"`
+	Summary     AdminGradeSummary `json:"summary"`
+}
+
+type AdminTaskResult struct {
+	TaskNumber  int    `json:"taskNumber"`
+	Title       string `json:"title"`
+	Passed      bool   `json:"passed"`
+	Explanation string `json:"explanation"`
+}
+
+type AdminGradeSummary struct {
+	Total  int `json:"total"`
+	Passed int `json:"passed"`
+	Failed int `json:"failed"`
+}
+
+// AdminProjectLabs - response from project labs endpoint
+type AdminProjectLabs struct {
+	ProjectID    string           `json:"project_id"`
+	ProjectTitle string           `json:"project_title"`
+	Lessons      []AdminLabLesson `json:"lessons"`
+}
+
+type AdminLabLesson struct {
+	ID            string    `json:"id"`
+	Title         string    `json:"title"`
+	SequenceOrder int       `json:"sequenceOrder"`
+	CliCommands   []string  `json:"cliCommands"`
+	Files         []LabFile `json:"files"`
+}
