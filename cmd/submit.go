@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/erikgeiser/promptkit/confirmation"
-	"github.com/erikgeiser/promptkit/selection"
 	"github.com/morethancertified/sprintctl/internal/mtcapi"
 	"github.com/morethancertified/sprintctl/internal/styles"
 	"github.com/morethancertified/sprintctl/internal/tui"
@@ -31,44 +30,17 @@ var submitCmd = &cobra.Command{
 		localConfigFile := filepath.Join(wd, ".sprint.json")
 
 		if _, err := os.Stat(localConfigFile); os.IsNotExist(err) {
-			fmt.Println(styles.InfoStyle.Render(" FIRST TIME SETUP "))
-			fmt.Println(styles.BoxStyle.Render("Please select the platform this lab is for:"))
-
-			// Create a map of display names to API URLs
-			platformMap := map[string]string{
-				"New Learning Platform (https://labs.morethancertified.com/api/v1)": "https://labs.morethancertified.com/api/v1",
-				"Legacy Video Platform (https://app.morethancertified.com/api/v1)":  "https://app.morethancertified.com/api/v1",
-				"CloudSprints (https://cloudsprints.com/api/v1)": "https://cloudsprints.com/api/v1",
-			}
-
-			// Create simple string choices for clean display
-			platformOptions := []string{
-				"New Learning Platform (https://labs.morethancertified.com/api/v1)",
-				"Legacy Video Platform (https://app.morethancertified.com/api/v1)",
-				"CloudSprints (https://cloudsprints.com/api/v1)",
-			}
-
-			sp := selection.New("Choose the platform:", platformOptions)
-			choice, err := sp.RunPrompt()
-			cobra.CheckErr(err)
-
-			// Look up the URL for the selected platform
-			selectedURL := platformMap[choice]
-
-			// Create the config map and save it to .sprint.json
-			config := map[string]interface{}{"api_base_url": selectedURL}
+			// Create default config with cloudsprints endpoint
+			defaultURL := "https://cloudsprints.com/api/v1"
+			config := map[string]interface{}{"api_base_url": defaultURL}
 			file, err := json.MarshalIndent(config, "", "  ")
 			cobra.CheckErr(err)
 
 			err = os.WriteFile(localConfigFile, file, 0644)
 			cobra.CheckErr(err)
 
-			// Set the value for the current run and merge in the new config
-			viper.Set("api_base_url", selectedURL)
-			viper.MergeInConfig() // Re-read to ensure it's loaded for this session
-			fmt.Println(styles.SuccessStyle.Render(" CONFIGURATION SAVED "))
-			fmt.Println(styles.BoxStyle.Render(fmt.Sprintf("Configuration saved to: %s", localConfigFile)))
-			fmt.Println(styles.Separator(60))
+			viper.Set("api_base_url", defaultURL)
+			viper.MergeInConfig()
 		}
 
 		// Determine lesson token

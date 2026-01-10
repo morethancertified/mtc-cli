@@ -54,10 +54,13 @@ func isKeyringUnavailable(err error) bool {
 	if err == nil {
 		return false
 	}
-	errStr := err.Error()
+	errStr := strings.ToLower(err.Error())
 	return strings.Contains(errStr, "dbus") || 
-	       strings.Contains(errStr, "D-Bus") ||
-	       strings.Contains(errStr, "secret service")
+	       strings.Contains(errStr, "d-bus") ||
+	       strings.Contains(errStr, "secret service") ||
+	       strings.Contains(errStr, "/run/user") ||
+	       strings.Contains(errStr, "no such file or directory") ||
+	       strings.Contains(errStr, "connection refused")
 }
 
 // getTokenFilePath returns the path to the token file
